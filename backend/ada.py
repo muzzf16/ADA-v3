@@ -180,7 +180,581 @@ iterate_cad_tool = {
     "behavior": "NON_BLOCKING"
 }
 
-tools = [{'google_search': {}}, {"function_declarations": [generate_cad, run_web_agent, create_project_tool, switch_project_tool, list_projects_tool, list_smart_devices_tool, control_light_tool, discover_printers_tool, print_stl_tool, get_print_status_tool, iterate_cad_tool] + tools_list[0]['function_declarations'][1:]}]
+# ==================== GOOGLE WORKSPACE TOOLS ====================
+
+google_authenticate_tool = {
+    "name": "google_authenticate",
+    "description": "Authenticates with Google Workspace services. Opens a browser window for user to log in. Use this first before any Google Workspace operations.",
+    "parameters": {
+        "type": "OBJECT",
+        "properties": {},
+    }
+}
+
+# Calendar Tools
+google_list_events_tool = {
+    "name": "google_list_events",
+    "description": "Lists upcoming events from Google Calendar. Use when user asks about their schedule, meetings, or upcoming appointments.",
+    "parameters": {
+        "type": "OBJECT",
+        "properties": {
+            "max_results": {"type": "INTEGER", "description": "Maximum number of events to return. Default 10."},
+            "time_min": {"type": "STRING", "description": "Start time in ISO format. Defaults to now."},
+            "time_max": {"type": "STRING", "description": "End time in ISO format. Optional."}
+        },
+        "required": []
+    }
+}
+
+google_create_event_tool = {
+    "name": "google_create_event",
+    "description": "Creates a new event in Google Calendar. Use when user wants to schedule a meeting, appointment, or reminder.",
+    "parameters": {
+        "type": "OBJECT",
+        "properties": {
+            "summary": {"type": "STRING", "description": "Event title/name."},
+            "start_time": {"type": "STRING", "description": "Start time (ISO format or natural language like 'tomorrow 10am')."},
+            "end_time": {"type": "STRING", "description": "End time (ISO format). Optional, defaults to 1 hour after start."},
+            "description": {"type": "STRING", "description": "Event description. Optional."},
+            "location": {"type": "STRING", "description": "Event location. Optional."},
+            "attendees": {"type": "STRING", "description": "Comma-separated email addresses to invite. Optional."}
+        },
+        "required": ["summary", "start_time"]
+    }
+}
+
+google_delete_event_tool = {
+    "name": "google_delete_event",
+    "description": "Deletes an event from Google Calendar.",
+    "parameters": {
+        "type": "OBJECT",
+        "properties": {
+            "event_id": {"type": "STRING", "description": "The ID of the event to delete."}
+        },
+        "required": ["event_id"]
+    }
+}
+
+# Sheets Tools
+google_read_spreadsheet_tool = {
+    "name": "google_read_spreadsheet",
+    "description": "Reads data from a Google Spreadsheet. Use when user wants to view or get data from a spreadsheet.",
+    "parameters": {
+        "type": "OBJECT",
+        "properties": {
+            "spreadsheet_id": {"type": "STRING", "description": "The ID of the spreadsheet (from URL)."},
+            "range_name": {"type": "STRING", "description": "The range to read (e.g., 'Sheet1!A1:D10'). Default 'Sheet1!A1:Z100'."}
+        },
+        "required": ["spreadsheet_id"]
+    }
+}
+
+google_write_spreadsheet_tool = {
+    "name": "google_write_spreadsheet",
+    "description": "Writes or updates data in a Google Spreadsheet. Use when user wants to update specific cells.",
+    "parameters": {
+        "type": "OBJECT",
+        "properties": {
+            "spreadsheet_id": {"type": "STRING", "description": "The ID of the spreadsheet."},
+            "range_name": {"type": "STRING", "description": "The range to write to (e.g., 'Sheet1!A1')."},
+            "values": {"type": "STRING", "description": "JSON array of rows to write, e.g., '[[\"Name\", \"Age\"], [\"John\", 30]]'."}
+        },
+        "required": ["spreadsheet_id", "range_name", "values"]
+    }
+}
+
+google_append_spreadsheet_tool = {
+    "name": "google_append_spreadsheet",
+    "description": "Appends new rows to a Google Spreadsheet. Use when user wants to add data without overwriting existing data.",
+    "parameters": {
+        "type": "OBJECT",
+        "properties": {
+            "spreadsheet_id": {"type": "STRING", "description": "The ID of the spreadsheet."},
+            "range_name": {"type": "STRING", "description": "The range to append to (e.g., 'Sheet1!A:D')."},
+            "values": {"type": "STRING", "description": "JSON array of rows to append, e.g., '[[\"John\", 30, \"Engineer\"]]'."}
+        },
+        "required": ["spreadsheet_id", "range_name", "values"]
+    }
+}
+
+google_create_spreadsheet_tool = {
+    "name": "google_create_spreadsheet",
+    "description": "Creates a new Google Spreadsheet. Use when user wants to create a new spreadsheet.",
+    "parameters": {
+        "type": "OBJECT",
+        "properties": {
+            "title": {"type": "STRING", "description": "Title of the new spreadsheet."},
+            "sheets": {"type": "STRING", "description": "Comma-separated list of sheet names to create. Optional."}
+        },
+        "required": ["title"]
+    }
+}
+
+# Drive Tools
+google_list_drive_files_tool = {
+    "name": "google_list_drive_files",
+    "description": "Lists files in Google Drive. Use when user wants to see files in their Drive.",
+    "parameters": {
+        "type": "OBJECT",
+        "properties": {
+            "query": {"type": "STRING", "description": "Search query (e.g., \"name contains 'report'\"). Optional."},
+            "max_results": {"type": "INTEGER", "description": "Maximum number of files to return. Default 20."},
+            "folder_id": {"type": "STRING", "description": "ID of folder to list. Optional."}
+        },
+        "required": []
+    }
+}
+
+google_upload_to_drive_tool = {
+    "name": "google_upload_to_drive",
+    "description": "Uploads a file to Google Drive. Use when user wants to upload a local file to Drive.",
+    "parameters": {
+        "type": "OBJECT",
+        "properties": {
+            "file_path": {"type": "STRING", "description": "Local path to the file to upload."},
+            "folder_id": {"type": "STRING", "description": "ID of the folder to upload to. Optional."},
+            "file_name": {"type": "STRING", "description": "Name for the file in Drive. Optional, uses original name."}
+        },
+        "required": ["file_path"]
+    }
+}
+
+google_download_from_drive_tool = {
+    "name": "google_download_from_drive",
+    "description": "Downloads a file from Google Drive. Use when user wants to download a file from Drive.",
+    "parameters": {
+        "type": "OBJECT",
+        "properties": {
+            "file_id": {"type": "STRING", "description": "ID of the file to download."},
+            "destination_path": {"type": "STRING", "description": "Local path to save the file."}
+        },
+        "required": ["file_id", "destination_path"]
+    }
+}
+
+google_create_drive_folder_tool = {
+    "name": "google_create_drive_folder",
+    "description": "Creates a new folder in Google Drive. Use when user wants to create a new folder.",
+    "parameters": {
+        "type": "OBJECT",
+        "properties": {
+            "folder_name": {"type": "STRING", "description": "Name of the new folder."},
+            "parent_id": {"type": "STRING", "description": "ID of parent folder. Optional."}
+        },
+        "required": ["folder_name"]
+    }
+}
+
+# Gmail Tools
+google_send_email_tool = {
+    "name": "google_send_email",
+    "description": "Sends an email via Gmail. Use when user wants to send an email.",
+    "parameters": {
+        "type": "OBJECT",
+        "properties": {
+            "to": {"type": "STRING", "description": "Recipient email address."},
+            "subject": {"type": "STRING", "description": "Email subject."},
+            "body": {"type": "STRING", "description": "Email body content."},
+            "cc": {"type": "STRING", "description": "CC recipients (comma-separated). Optional."},
+            "bcc": {"type": "STRING", "description": "BCC recipients (comma-separated). Optional."}
+        },
+        "required": ["to", "subject", "body"]
+    }
+}
+
+google_list_emails_tool = {
+    "name": "google_list_emails",
+    "description": "Lists emails from Gmail inbox. Use when user wants to check their emails.",
+    "parameters": {
+        "type": "OBJECT",
+        "properties": {
+            "max_results": {"type": "INTEGER", "description": "Maximum number of emails to return. Default 10."},
+            "query": {"type": "STRING", "description": "Gmail search query (e.g., 'is:unread', 'from:someone@gmail.com'). Optional."}
+        },
+        "required": []
+    }
+}
+
+google_read_email_tool = {
+    "name": "google_read_email",
+    "description": "Reads a specific email by ID. Use when user wants to view an email's full content.",
+    "parameters": {
+        "type": "OBJECT",
+        "properties": {
+            "message_id": {"type": "STRING", "description": "ID of the email to read."}
+        },
+        "required": ["message_id"]
+    }
+}
+
+# Docs Tools
+google_create_document_tool = {
+    "name": "google_create_document",
+    "description": "Creates a new Google Document. Use when user wants to create a new document.",
+    "parameters": {
+        "type": "OBJECT",
+        "properties": {
+            "title": {"type": "STRING", "description": "Document title."},
+            "content": {"type": "STRING", "description": "Initial content to add. Optional."}
+        },
+        "required": ["title"]
+    }
+}
+
+google_read_document_tool = {
+    "name": "google_read_document",
+    "description": "Reads content from a Google Document. Use when user wants to view document content.",
+    "parameters": {
+        "type": "OBJECT",
+        "properties": {
+            "document_id": {"type": "STRING", "description": "ID of the document to read."}
+        },
+        "required": ["document_id"]
+    }
+}
+
+google_append_document_tool = {
+    "name": "google_append_document",
+    "description": "Appends text to the end of a Google Document. Use when user wants to add content to a document.",
+    "parameters": {
+        "type": "OBJECT",
+        "properties": {
+            "document_id": {"type": "STRING", "description": "ID of the document."},
+            "content": {"type": "STRING", "description": "Text content to append."}
+        },
+        "required": ["document_id", "content"]
+    }
+}
+
+# Google Workspace tools list
+google_workspace_tools = [
+    google_authenticate_tool,
+    google_list_events_tool,
+    google_create_event_tool,
+    google_delete_event_tool,
+    google_read_spreadsheet_tool,
+    google_write_spreadsheet_tool,
+    google_append_spreadsheet_tool,
+    google_create_spreadsheet_tool,
+    google_list_drive_files_tool,
+    google_upload_to_drive_tool,
+    google_download_from_drive_tool,
+    google_create_drive_folder_tool,
+    google_send_email_tool,
+    google_list_emails_tool,
+    google_read_email_tool,
+    google_create_document_tool,
+    google_read_document_tool,
+    google_append_document_tool,
+]
+
+# ==================== N8N MCP TOOLS ====================
+
+n8n_connect_tool = {
+    "name": "n8n_connect",
+    "description": "Connect to n8n MCP Server. Use this to test the connection to n8n workflow automation.",
+    "parameters": {
+        "type": "OBJECT",
+        "properties": {},
+    }
+}
+
+n8n_list_workflows_tool = {
+    "name": "n8n_list_workflows",
+    "description": "List all available workflows in n8n that are exposed via MCP. Use when user wants to see what automations are available.",
+    "parameters": {
+        "type": "OBJECT",
+        "properties": {},
+    }
+}
+
+n8n_search_workflows_tool = {
+    "name": "n8n_search_workflows",
+    "description": "Search for workflows in n8n by name or description.",
+    "parameters": {
+        "type": "OBJECT",
+        "properties": {
+            "query": {"type": "STRING", "description": "Search query to find workflows."}
+        },
+        "required": ["query"]
+    }
+}
+
+n8n_execute_workflow_tool = {
+    "name": "n8n_execute_workflow",
+    "description": "Execute an n8n workflow with optional input data. Use when user wants to run an automation workflow.",
+    "parameters": {
+        "type": "OBJECT",
+        "properties": {
+            "workflow_name": {"type": "STRING", "description": "Name of the workflow to execute (from list_workflows)."},
+            "input_data": {"type": "STRING", "description": "JSON string of input data to pass to the workflow. Optional."}
+        },
+        "required": ["workflow_name"]
+    }
+}
+
+n8n_get_workflow_info_tool = {
+    "name": "n8n_get_workflow_info",
+    "description": "Get detailed information about a specific n8n workflow including its input schema.",
+    "parameters": {
+        "type": "OBJECT",
+        "properties": {
+            "workflow_name": {"type": "STRING", "description": "Name of the workflow to get info about."}
+        },
+        "required": ["workflow_name"]
+    }
+}
+
+# n8n MCP tools list
+n8n_mcp_tools = [
+    n8n_connect_tool,
+    n8n_list_workflows_tool,
+    n8n_search_workflows_tool,
+    n8n_execute_workflow_tool,
+    n8n_get_workflow_info_tool,
+]
+
+# ==================== LOCAL PC TOOLS ====================
+
+pc_create_file_tool = {
+    "name": "pc_create_file",
+    "description": "Create a new file on the local PC. Use when user wants to create a new file. Paths are relative to user folders like Desktop, Documents, Downloads.",
+    "parameters": {
+        "type": "OBJECT",
+        "properties": {
+            "path": {"type": "STRING", "description": "File path, e.g., 'Desktop/notes.txt' or 'Documents/report.md'"},
+            "content": {"type": "STRING", "description": "Content to write to the file. Optional."}
+        },
+        "required": ["path"]
+    }
+}
+
+pc_read_file_tool = {
+    "name": "pc_read_file",
+    "description": "Read content from a file on the local PC. Use when user wants to see what's in a file.",
+    "parameters": {
+        "type": "OBJECT",
+        "properties": {
+            "path": {"type": "STRING", "description": "File path to read, e.g., 'Desktop/notes.txt'"}
+        },
+        "required": ["path"]
+    }
+}
+
+pc_write_file_tool = {
+    "name": "pc_write_file",
+    "description": "Write content to a file on the local PC. Creates or overwrites the file.",
+    "parameters": {
+        "type": "OBJECT",
+        "properties": {
+            "path": {"type": "STRING", "description": "File path to write to"},
+            "content": {"type": "STRING", "description": "Content to write"}
+        },
+        "required": ["path", "content"]
+    }
+}
+
+pc_list_folder_tool = {
+    "name": "pc_list_folder",
+    "description": "List contents of a folder on the local PC. Use when user wants to see files in a folder.",
+    "parameters": {
+        "type": "OBJECT",
+        "properties": {
+            "path": {"type": "STRING", "description": "Folder path, e.g., 'Desktop', 'Documents', 'Downloads'. Defaults to Documents."}
+        },
+        "required": []
+    }
+}
+
+pc_create_folder_tool = {
+    "name": "pc_create_folder",
+    "description": "Create a new folder on the local PC.",
+    "parameters": {
+        "type": "OBJECT",
+        "properties": {
+            "path": {"type": "STRING", "description": "Folder path to create, e.g., 'Documents/Projects/NewFolder'"}
+        },
+        "required": ["path"]
+    }
+}
+
+pc_open_app_tool = {
+    "name": "pc_open_app",
+    "description": "Open an application on the local PC. Available apps: notepad, calculator, paint, chrome, edge, firefox, vscode, word, excel, terminal, browser.",
+    "parameters": {
+        "type": "OBJECT",
+        "properties": {
+            "app_name": {"type": "STRING", "description": "Name of the application, e.g., 'notepad', 'chrome', 'vscode'"},
+            "args": {"type": "STRING", "description": "Optional arguments, e.g., URL for browser, file path for editor"}
+        },
+        "required": ["app_name"]
+    }
+}
+
+pc_search_files_tool = {
+    "name": "pc_search_files",
+    "description": "Search for files on the local PC by name, extension, or content. Use when user wants to find files, locate documents, or search for specific file types.",
+    "parameters": {
+        "type": "OBJECT",
+        "properties": {
+            "query": {"type": "STRING", "description": "Search query - filename pattern or substring to match (e.g., 'report', '*.pdf', 'invoice*')"},
+            "search_path": {"type": "STRING", "description": "Directory to search in (e.g., 'Documents', 'Desktop'). Defaults to all allowed directories."},
+            "file_extension": {"type": "STRING", "description": "File extension filter without dot (e.g., 'pdf', 'docx', 'txt')"},
+            "max_results": {"type": "INTEGER", "description": "Maximum results to return (default: 50)"},
+            "search_content": {"type": "BOOLEAN", "description": "If true, also search within file contents (slower, only for text files)"}
+        },
+        "required": ["query"]
+    }
+}
+
+# Local PC tools list
+local_pc_tools = [
+    pc_create_file_tool,
+    pc_read_file_tool,
+    pc_write_file_tool,
+    pc_list_folder_tool,
+    pc_create_folder_tool,
+    pc_open_app_tool,
+    pc_search_files_tool,
+]
+
+# ==================== WEBHOOK TOOLS ====================
+
+webhook_send_tool = {
+    "name": "webhook_send",
+    "description": "Send data to a webhook URL. Use to trigger external automations, notify services, or send data to n8n/Discord/Slack.",
+    "parameters": {
+        "type": "OBJECT",
+        "properties": {
+            "url": {"type": "STRING", "description": "Webhook URL to send to"},
+            "data": {"type": "STRING", "description": "JSON data to send (as string)"},
+            "method": {"type": "STRING", "description": "HTTP method: POST (default), PUT, etc."}
+        },
+        "required": ["url", "data"]
+    }
+}
+
+webhook_send_saved_tool = {
+    "name": "webhook_send_saved",
+    "description": "Send data to a saved webhook by name. Saved webhooks: n8n, discord, slack, custom.",
+    "parameters": {
+        "type": "OBJECT",
+        "properties": {
+            "webhook_name": {"type": "STRING", "description": "Name of saved webhook: n8n, discord, slack, custom"},
+            "data": {"type": "STRING", "description": "JSON data to send (as string)"}
+        },
+        "required": ["webhook_name", "data"]
+    }
+}
+
+webhook_list_tool = {
+    "name": "webhook_list",
+    "description": "List all saved and registered webhooks.",
+    "parameters": {
+        "type": "OBJECT",
+        "properties": {},
+        "required": []
+    }
+}
+
+# Webhook tools list
+webhook_tools = [
+    webhook_send_tool,
+    webhook_send_saved_tool,
+    webhook_list_tool,
+]
+
+# ==================== WHATSAPP TOOLS ====================
+
+wa_send_message_tool = {
+    "name": "wa_send_message",
+    "description": "Send a WhatsApp message to a phone number. Use Indonesian format (08xxx or 628xxx).",
+    "parameters": {
+        "type": "OBJECT",
+        "properties": {
+            "phone": {"type": "STRING", "description": "Destination phone number (e.g., 08123456789 or 628123456789)"},
+            "message": {"type": "STRING", "description": "Message content to send"}
+        },
+        "required": ["phone", "message"]
+    }
+}
+
+wa_check_status_tool = {
+    "name": "wa_check_status",
+    "description": "Check WhatsApp connection status.",
+    "parameters": {
+        "type": "OBJECT",
+        "properties": {},
+        "required": []
+    }
+}
+
+# WhatsApp tools list
+whatsapp_tools = [
+    wa_send_message_tool,
+    wa_check_status_tool,
+]
+
+# ==================== DOCUMENT PRINTER TOOLS ====================
+
+doc_list_printers_tool = {
+    "name": "doc_list_printers",
+    "description": "List all available printers installed on the PC or network.",
+    "parameters": {
+        "type": "OBJECT",
+        "properties": {},
+        "required": []
+    }
+}
+
+doc_print_file_tool = {
+    "name": "doc_print_file",
+    "description": "Print a document file (PDF, Word, Excel, Image, Text) to a printer.",
+    "parameters": {
+        "type": "OBJECT",
+        "properties": {
+            "file_path": {"type": "STRING", "description": "Path to the file to print"},
+            "printer_name": {"type": "STRING", "description": "Name of printer (optional, uses default)"},
+            "copies": {"type": "INTEGER", "description": "Number of copies (default: 1)"}
+        },
+        "required": ["file_path"]
+    }
+}
+
+doc_print_text_tool = {
+    "name": "doc_print_text",
+    "description": "Print text content directly to a printer.",
+    "parameters": {
+        "type": "OBJECT",
+        "properties": {
+            "text": {"type": "STRING", "description": "Text content to print"},
+            "printer_name": {"type": "STRING", "description": "Name of printer (optional)"}
+        },
+        "required": ["text"]
+    }
+}
+
+doc_printer_status_tool = {
+    "name": "doc_printer_status",
+    "description": "Get status of a printer (ready, busy, error, etc).",
+    "parameters": {
+        "type": "OBJECT",
+        "properties": {
+            "printer_name": {"type": "STRING", "description": "Name of printer (optional)"}
+        },
+        "required": []
+    }
+}
+
+# Document printer tools list
+document_printer_tools = [
+    doc_list_printers_tool,
+    doc_print_file_tool,
+    doc_print_text_tool,
+    doc_printer_status_tool,
+]
+
+tools = [{'google_search': {}}, {"function_declarations": [generate_cad, run_web_agent, create_project_tool, switch_project_tool, list_projects_tool, list_smart_devices_tool, control_light_tool, discover_printers_tool, print_stl_tool, get_print_status_tool, iterate_cad_tool] + google_workspace_tools + n8n_mcp_tools + local_pc_tools + webhook_tools + whatsapp_tools + document_printer_tools + tools_list[0]['function_declarations'][1:]}]
 
 # --- CONFIG UPDATE: Enabled Transcription ---
 config = types.LiveConnectConfig(
@@ -209,6 +783,12 @@ from cad_agent import CadAgent
 from web_agent import WebAgent
 from kasa_agent import KasaAgent
 from printer_agent import PrinterAgent
+from google_workspace_agent import get_workspace_agent
+from n8n_mcp_agent import get_n8n_agent
+from local_pc_agent import get_local_pc_agent
+from webhook_agent import get_webhook_agent
+from whatsapp_agent import get_whatsapp_agent
+from document_printer_agent import get_document_printer_agent
 
 class AudioLoop:
     def __init__(self, video_mode=DEFAULT_MODE, on_audio_data=None, on_video_frame=None, on_cad_data=None, on_web_data=None, on_transcription=None, on_tool_confirmation=None, on_cad_status=None, on_cad_thought=None, on_project_update=None, on_device_update=None, on_error=None, input_device_index=None, input_device_name=None, output_device_index=None, kasa_agent=None):
@@ -257,6 +837,12 @@ class AudioLoop:
         self.web_agent = WebAgent()
         self.kasa_agent = kasa_agent if kasa_agent else KasaAgent()
         self.printer_agent = PrinterAgent()
+        self.google_workspace_agent = get_workspace_agent()
+        self.n8n_mcp_agent = get_n8n_agent()
+        self.local_pc_agent = get_local_pc_agent()
+        self.webhook_agent = get_webhook_agent()
+        self.whatsapp_agent = get_whatsapp_agent()
+        self.document_printer_agent = get_document_printer_agent()
 
         self.send_text_task = None
         self.stop_event = asyncio.Event()
@@ -637,6 +1223,749 @@ class AudioLoop:
         except Exception as e:
              print(f"[ADA DEBUG] [ERR] Failed to send web agent result to model: {e}")
 
+    # ==================== GOOGLE WORKSPACE HANDLERS ====================
+
+    async def handle_google_authenticate(self):
+        """Handle Google Workspace authentication."""
+        print(f"[ADA DEBUG] [GOOGLE] Starting authentication...")
+        result = await self.google_workspace_agent.authenticate()
+        
+        if result.get("success"):
+            message = "Successfully authenticated with Google Workspace! You can now use Calendar, Sheets, Drive, Gmail, and Docs."
+        else:
+            message = f"Google authentication failed: {result.get('error', 'Unknown error')}"
+        
+        print(f"[ADA DEBUG] [GOOGLE] Auth result: {message}")
+        try:
+            await self.session.send(input=f"System Notification: {message}", end_of_turn=True)
+        except Exception as e:
+            print(f"[ADA DEBUG] [ERR] Failed to send auth result: {e}")
+        
+        return result
+
+    async def handle_google_list_events(self, max_results=10, time_min=None, time_max=None):
+        """Handle listing calendar events."""
+        print(f"[ADA DEBUG] [GOOGLE] Listing calendar events...")
+        result = await self.google_workspace_agent.list_calendar_events(
+            max_results=max_results,
+            time_min=time_min,
+            time_max=time_max
+        )
+        
+        if result.get("success"):
+            events = result.get("events", [])
+            if events:
+                event_list = "\n".join([
+                    f"- {e['summary']} at {e['start']}" for e in events
+                ])
+                message = f"Found {len(events)} upcoming events:\n{event_list}"
+            else:
+                message = "No upcoming events found."
+        else:
+            message = f"Failed to list events: {result.get('error', 'Unknown error')}"
+        
+        print(f"[ADA DEBUG] [GOOGLE] List events result: {message[:100]}...")
+        return {"result": message}
+
+    async def handle_google_create_event(self, summary, start_time, end_time=None, description="", location="", attendees=None):
+        """Handle creating a calendar event."""
+        print(f"[ADA DEBUG] [GOOGLE] Creating event: {summary}")
+        
+        attendees_list = None
+        if attendees:
+            attendees_list = [a.strip() for a in attendees.split(",")]
+        
+        result = await self.google_workspace_agent.create_calendar_event(
+            summary=summary,
+            start_time=start_time,
+            end_time=end_time,
+            description=description,
+            location=location,
+            attendees=attendees_list
+        )
+        
+        if result.get("success"):
+            message = f"Event '{summary}' created successfully! Link: {result.get('link', 'N/A')}"
+        else:
+            message = f"Failed to create event: {result.get('error', 'Unknown error')}"
+        
+        print(f"[ADA DEBUG] [GOOGLE] Create event result: {message}")
+        return {"result": message}
+
+    async def handle_google_delete_event(self, event_id):
+        """Handle deleting a calendar event."""
+        print(f"[ADA DEBUG] [GOOGLE] Deleting event: {event_id}")
+        result = await self.google_workspace_agent.delete_calendar_event(event_id=event_id)
+        
+        if result.get("success"):
+            message = f"Event deleted successfully."
+        else:
+            message = f"Failed to delete event: {result.get('error', 'Unknown error')}"
+        
+        return {"result": message}
+
+    async def handle_google_read_spreadsheet(self, spreadsheet_id, range_name="Sheet1!A1:Z100"):
+        """Handle reading from a spreadsheet."""
+        print(f"[ADA DEBUG] [GOOGLE] Reading spreadsheet: {spreadsheet_id}")
+        result = await self.google_workspace_agent.read_spreadsheet(
+            spreadsheet_id=spreadsheet_id,
+            range_name=range_name
+        )
+        
+        if result.get("success"):
+            data = result.get("data", [])
+            rows = len(data)
+            # Format as simple table for display
+            if data:
+                formatted = "\n".join([" | ".join(str(cell) for cell in row) for row in data[:20]])
+                message = f"Read {rows} rows from spreadsheet:\n{formatted}"
+                if rows > 20:
+                    message += f"\n... and {rows - 20} more rows"
+            else:
+                message = "Spreadsheet is empty or range contains no data."
+        else:
+            message = f"Failed to read spreadsheet: {result.get('error', 'Unknown error')}"
+        
+        return {"result": message, "data": result.get("data", [])}
+
+    async def handle_google_write_spreadsheet(self, spreadsheet_id, range_name, values):
+        """Handle writing to a spreadsheet."""
+        print(f"[ADA DEBUG] [GOOGLE] Writing to spreadsheet: {spreadsheet_id}")
+        
+        import json
+        try:
+            values_list = json.loads(values)
+        except:
+            values_list = [[values]]  # Wrap single value
+        
+        result = await self.google_workspace_agent.write_spreadsheet(
+            spreadsheet_id=spreadsheet_id,
+            range_name=range_name,
+            values=values_list
+        )
+        
+        if result.get("success"):
+            message = f"Successfully updated {result.get('updated_cells', 'N/A')} cells."
+        else:
+            message = f"Failed to write to spreadsheet: {result.get('error', 'Unknown error')}"
+        
+        return {"result": message}
+
+    async def handle_google_append_spreadsheet(self, spreadsheet_id, range_name, values):
+        """Handle appending to a spreadsheet."""
+        print(f"[ADA DEBUG] [GOOGLE] Appending to spreadsheet: {spreadsheet_id}")
+        
+        import json
+        try:
+            values_list = json.loads(values)
+        except:
+            values_list = [[values]]
+        
+        result = await self.google_workspace_agent.append_spreadsheet(
+            spreadsheet_id=spreadsheet_id,
+            range_name=range_name,
+            values=values_list
+        )
+        
+        if result.get("success"):
+            message = "Data appended successfully to spreadsheet."
+        else:
+            message = f"Failed to append to spreadsheet: {result.get('error', 'Unknown error')}"
+        
+        return {"result": message}
+
+    async def handle_google_create_spreadsheet(self, title, sheets=None):
+        """Handle creating a new spreadsheet."""
+        print(f"[ADA DEBUG] [GOOGLE] Creating spreadsheet: {title}")
+        
+        sheets_list = None
+        if sheets:
+            sheets_list = [s.strip() for s in sheets.split(",")]
+        
+        result = await self.google_workspace_agent.create_spreadsheet(
+            title=title,
+            sheets=sheets_list
+        )
+        
+        if result.get("success"):
+            message = f"Spreadsheet '{title}' created! URL: {result.get('url', 'N/A')}"
+        else:
+            message = f"Failed to create spreadsheet: {result.get('error', 'Unknown error')}"
+        
+        return {"result": message, "spreadsheet_id": result.get("spreadsheet_id")}
+
+    async def handle_google_list_drive_files(self, query=None, max_results=20, folder_id=None):
+        """Handle listing Drive files."""
+        print(f"[ADA DEBUG] [GOOGLE] Listing Drive files...")
+        result = await self.google_workspace_agent.list_drive_files(
+            query=query,
+            max_results=max_results,
+            folder_id=folder_id
+        )
+        
+        if result.get("success"):
+            files = result.get("files", [])
+            if files:
+                file_list = "\n".join([
+                    f"- {f['name']} ({f.get('mimeType', 'unknown')})" for f in files
+                ])
+                message = f"Found {len(files)} files:\n{file_list}"
+            else:
+                message = "No files found in Drive."
+        else:
+            message = f"Failed to list files: {result.get('error', 'Unknown error')}"
+        
+        return {"result": message, "files": result.get("files", [])}
+
+    async def handle_google_upload_to_drive(self, file_path, folder_id=None, file_name=None):
+        """Handle uploading file to Drive."""
+        print(f"[ADA DEBUG] [GOOGLE] Uploading to Drive: {file_path}")
+        result = await self.google_workspace_agent.upload_to_drive(
+            file_path=file_path,
+            folder_id=folder_id,
+            file_name=file_name
+        )
+        
+        if result.get("success"):
+            message = f"File uploaded successfully! Link: {result.get('link', 'N/A')}"
+        else:
+            message = f"Failed to upload file: {result.get('error', 'Unknown error')}"
+        
+        return {"result": message}
+
+    async def handle_google_download_from_drive(self, file_id, destination_path):
+        """Handle downloading file from Drive."""
+        print(f"[ADA DEBUG] [GOOGLE] Downloading from Drive: {file_id}")
+        result = await self.google_workspace_agent.download_from_drive(
+            file_id=file_id,
+            destination_path=destination_path
+        )
+        
+        if result.get("success"):
+            message = f"File downloaded to: {destination_path}"
+        else:
+            message = f"Failed to download file: {result.get('error', 'Unknown error')}"
+        
+        return {"result": message}
+
+    async def handle_google_create_drive_folder(self, folder_name, parent_id=None):
+        """Handle creating a Drive folder."""
+        print(f"[ADA DEBUG] [GOOGLE] Creating Drive folder: {folder_name}")
+        result = await self.google_workspace_agent.create_drive_folder(
+            folder_name=folder_name,
+            parent_id=parent_id
+        )
+        
+        if result.get("success"):
+            message = f"Folder '{folder_name}' created! Link: {result.get('link', 'N/A')}"
+        else:
+            message = f"Failed to create folder: {result.get('error', 'Unknown error')}"
+        
+        return {"result": message, "folder_id": result.get("folder_id")}
+
+    async def handle_google_send_email(self, to, subject, body, cc=None, bcc=None):
+        """Handle sending an email."""
+        print(f"[ADA DEBUG] [GOOGLE] Sending email to: {to}")
+        result = await self.google_workspace_agent.send_email(
+            to=to,
+            subject=subject,
+            body=body,
+            cc=cc,
+            bcc=bcc
+        )
+        
+        if result.get("success"):
+            message = f"Email sent successfully to {to}!"
+        else:
+            message = f"Failed to send email: {result.get('error', 'Unknown error')}"
+        
+        return {"result": message}
+
+    async def handle_google_list_emails(self, max_results=10, query=None):
+        """Handle listing emails."""
+        print(f"[ADA DEBUG] [GOOGLE] Listing emails...")
+        result = await self.google_workspace_agent.list_emails(
+            max_results=max_results,
+            query=query
+        )
+        
+        if result.get("success"):
+            emails = result.get("emails", [])
+            if emails:
+                email_list = "\n".join([
+                    f"- From: {e['from'][:30]}... Subject: {e['subject'][:40]}..." for e in emails
+                ])
+                message = f"Found {len(emails)} emails:\n{email_list}"
+            else:
+                message = "No emails found."
+        else:
+            message = f"Failed to list emails: {result.get('error', 'Unknown error')}"
+        
+        return {"result": message, "emails": result.get("emails", [])}
+
+    async def handle_google_read_email(self, message_id):
+        """Handle reading a specific email."""
+        print(f"[ADA DEBUG] [GOOGLE] Reading email: {message_id}")
+        result = await self.google_workspace_agent.read_email(message_id=message_id)
+        
+        if result.get("success"):
+            message = f"From: {result.get('from')}\nSubject: {result.get('subject')}\nDate: {result.get('date')}\n\n{result.get('body', result.get('snippet', ''))}"
+        else:
+            message = f"Failed to read email: {result.get('error', 'Unknown error')}"
+        
+        return {"result": message}
+
+    async def handle_google_create_document(self, title, content=None):
+        """Handle creating a Google Document."""
+        print(f"[ADA DEBUG] [GOOGLE] Creating document: {title}")
+        result = await self.google_workspace_agent.create_document(
+            title=title,
+            content=content
+        )
+        
+        if result.get("success"):
+            message = f"Document '{title}' created! URL: {result.get('url', 'N/A')}"
+        else:
+            message = f"Failed to create document: {result.get('error', 'Unknown error')}"
+        
+        return {"result": message, "document_id": result.get("document_id")}
+
+    async def handle_google_read_document(self, document_id):
+        """Handle reading a Google Document."""
+        print(f"[ADA DEBUG] [GOOGLE] Reading document: {document_id}")
+        result = await self.google_workspace_agent.read_document(document_id=document_id)
+        
+        if result.get("success"):
+            content = result.get("content", "")
+            if len(content) > 2000:
+                content = content[:2000] + "... (truncated)"
+            message = f"Document: {result.get('title')}\n\n{content}"
+        else:
+            message = f"Failed to read document: {result.get('error', 'Unknown error')}"
+        
+        return {"result": message}
+
+    async def handle_google_append_document(self, document_id, content):
+        """Handle appending to a Google Document."""
+        print(f"[ADA DEBUG] [GOOGLE] Appending to document: {document_id}")
+        result = await self.google_workspace_agent.append_to_document(
+            document_id=document_id,
+            content=content
+        )
+        
+        if result.get("success"):
+            message = f"Content appended successfully! URL: {result.get('url', 'N/A')}"
+        else:
+            message = f"Failed to append to document: {result.get('error', 'Unknown error')}"
+        
+        return {"result": message}
+
+    # ==================== N8N MCP HANDLERS ====================
+
+    async def handle_n8n_connect(self):
+        """Handle connecting to n8n MCP Server."""
+        print(f"[ADA DEBUG] [N8N] Connecting to n8n MCP Server...")
+        result = await self.n8n_mcp_agent.connect()
+        
+        if result.get("success"):
+            message = f"Connected to n8n MCP Server! Server: {result.get('server_name', 'n8n')}"
+        else:
+            message = f"Failed to connect to n8n: {result.get('error', 'Unknown error')}"
+        
+        print(f"[ADA DEBUG] [N8N] Connect result: {message}")
+        return {"result": message}
+
+    async def handle_n8n_list_workflows(self):
+        """Handle listing available n8n workflows."""
+        print(f"[ADA DEBUG] [N8N] Listing workflows...")
+        result = await self.n8n_mcp_agent.list_workflows()
+        
+        if result.get("success"):
+            workflows = result.get("workflows", [])
+            # Extract actual workflow data from nested structure
+            workflow_names = []  # List of (name, id) tuples
+            for w in workflows:
+                if isinstance(w, dict):
+                    # Handle nested data structure: {data: [{id, name, ...}]}
+                    if "data" in w:
+                        for item in w.get("data", []):
+                            if isinstance(item, dict) and "name" in item:
+                                workflow_names.append((item.get("name", "Unknown"), item.get("id", "N/A")))
+                    elif "name" in w:
+                        workflow_names.append((w.get("name", "Unknown"), w.get("id", "N/A")))
+            
+            if workflow_names:
+                workflow_list = "\n".join([f"- {name} (ID: {wid})" for name, wid in workflow_names[:10]])
+                message = f"Found {len(workflow_names)} workflows:\n{workflow_list}"
+                if len(workflow_names) > 10:
+                    message += f"\n...and {len(workflow_names) - 10} more"
+            else:
+                message = "No workflows found. Make sure workflows are exposed to MCP in n8n settings."
+        else:
+            message = f"Failed to list workflows: {result.get('error', 'Unknown error')}"
+        
+        return {"result": message, "workflows": result.get("workflows", [])}
+
+    async def handle_n8n_search_workflows(self, query):
+        """Handle searching n8n workflows."""
+        print(f"[ADA DEBUG] [N8N] Searching workflows: {query}")
+        result = await self.n8n_mcp_agent.search_workflows(query)
+        
+        if result.get("success"):
+            workflows = result.get("workflows", [])
+            # Extract actual workflow data from nested structure
+            workflow_names = []  # List of (name, id) tuples
+            for w in workflows:
+                if isinstance(w, dict):
+                    # Handle nested data structure: {data: [{id, name, ...}]}
+                    if "data" in w:
+                        for item in w.get("data", []):
+                            if isinstance(item, dict) and "name" in item:
+                                workflow_names.append((item.get("name", "Unknown"), item.get("id", "N/A")))
+                    elif "name" in w:
+                        workflow_names.append((w.get("name", "Unknown"), w.get("id", "N/A")))
+            
+            if workflow_names:
+                workflow_list = "\n".join([f"- {name} (ID: {wid})" for name, wid in workflow_names])
+                message = f"Found {len(workflow_names)} matching workflows:\n{workflow_list}\n\nTo execute, use the workflow ID."
+            else:
+                message = f"No workflows found matching '{query}'."
+        else:
+            message = f"Search failed: {result.get('error', 'Unknown error')}"
+        
+        return {"result": message, "workflows": result.get("workflows", [])}
+
+    async def handle_n8n_execute_workflow(self, workflow_name, input_data=None):
+        """Handle executing an n8n workflow. workflow_name can be the workflow ID."""
+        print(f"[ADA DEBUG] [N8N] Executing workflow: {workflow_name}")
+        
+        # Parse input_data if it's a JSON string
+        parsed_data = {}
+        if input_data:
+            import json
+            try:
+                parsed_data = json.loads(input_data)
+            except:
+                parsed_data = {"input": input_data}
+        
+        # workflow_name is actually the workflow ID
+        result = await self.n8n_mcp_agent.execute_workflow(workflow_name, parsed_data)
+        
+        if result.get("success"):
+            exec_result = result.get("result", {})
+            if isinstance(exec_result, dict):
+                exec_id = exec_result.get("executionId", "N/A")
+                if exec_result.get("success", True):
+                    message = f"Workflow executed successfully! Execution ID: {exec_id}"
+                else:
+                    error_msg = exec_result.get("result", {}).get("error", {}).get("message", "Unknown error")
+                    message = f"Workflow execution completed with warning. Execution ID: {exec_id}\nDetails: {str(error_msg)[:200]}"
+            else:
+                message = f"Workflow executed successfully! Result: {exec_result}"
+        else:
+            message = f"Workflow execution failed: {result.get('error', 'Unknown error')}"
+        
+        return {"result": message}
+
+    async def handle_n8n_get_workflow_info(self, workflow_name):
+        """Handle getting workflow details."""
+        print(f"[ADA DEBUG] [N8N] Getting info for workflow: {workflow_name}")
+        result = await self.n8n_mcp_agent.get_workflow_info(workflow_name)
+        
+        if result.get("success"):
+            workflow = result.get("workflow", {})
+            # Handle both string and dict responses
+            if isinstance(workflow, str):
+                message = f"Workflow Info: {workflow}"
+            elif isinstance(workflow, dict):
+                message = f"Workflow: {workflow.get('name', 'Unknown')}\n"
+                message += f"Description: {workflow.get('description', 'No description')}\n"
+                if workflow.get("input_schema"):
+                    message += f"Input Schema: {workflow.get('input_schema')}"
+            else:
+                message = f"Workflow Info: {str(workflow)}"
+        else:
+            message = f"Failed to get workflow info: {result.get('error', 'Unknown error')}"
+        
+        return {"result": message, "workflow": result.get("workflow", {})}
+
+    # ==================== LOCAL PC HANDLERS ====================
+
+    async def handle_pc_create_file(self, path, content=""):
+        """Handle creating a file on local PC."""
+        print(f"[ADA DEBUG] [PC] Creating file: {path}")
+        result = await self.local_pc_agent.create_file(path, content)
+        
+        if result.get("success"):
+            message = f"File created successfully at: {result.get('path')}"
+        else:
+            message = f"Failed to create file: {result.get('error', 'Unknown error')}"
+        
+        return {"result": message}
+
+    async def handle_pc_read_file(self, path):
+        """Handle reading a file from local PC."""
+        print(f"[ADA DEBUG] [PC] Reading file: {path}")
+        result = await self.local_pc_agent.read_file(path)
+        
+        if result.get("success"):
+            content = result.get("content", "")
+            if len(content) > 1000:
+                content = content[:1000] + "\n... (truncated, file is large)"
+            message = f"File content:\n{content}"
+        else:
+            message = f"Failed to read file: {result.get('error', 'Unknown error')}"
+        
+        return {"result": message}
+
+    async def handle_pc_write_file(self, path, content):
+        """Handle writing to a file on local PC."""
+        print(f"[ADA DEBUG] [PC] Writing to file: {path}")
+        result = await self.local_pc_agent.write_file(path, content)
+        
+        if result.get("success"):
+            message = f"File written successfully: {result.get('path')}"
+        else:
+            message = f"Failed to write file: {result.get('error', 'Unknown error')}"
+        
+        return {"result": message}
+
+    async def handle_pc_list_folder(self, path="Documents"):
+        """Handle listing folder contents on local PC."""
+        print(f"[ADA DEBUG] [PC] Listing folder: {path}")
+        result = await self.local_pc_agent.list_folder(path)
+        
+        if result.get("success"):
+            items = result.get("items", [])
+            if items:
+                item_list = "\n".join([
+                    f"📁 {item['name']}" if item['type'] == 'folder' else f"📄 {item['name']}"
+                    for item in items[:20]
+                ])
+                message = f"Contents of {path}:\n{item_list}"
+                if len(items) > 20:
+                    message += f"\n... and {len(items) - 20} more items"
+            else:
+                message = f"Folder {path} is empty."
+        else:
+            message = f"Failed to list folder: {result.get('error', 'Unknown error')}"
+        
+        return {"result": message}
+
+    async def handle_pc_create_folder(self, path):
+        """Handle creating a folder on local PC."""
+        print(f"[ADA DEBUG] [PC] Creating folder: {path}")
+        result = await self.local_pc_agent.create_folder(path)
+        
+        if result.get("success"):
+            message = f"Folder created successfully: {result.get('path')}"
+        else:
+            message = f"Failed to create folder: {result.get('error', 'Unknown error')}"
+        
+        return {"result": message}
+
+    async def handle_pc_open_app(self, app_name, args=None):
+        """Handle opening an application on local PC."""
+        print(f"[ADA DEBUG] [PC] Opening app: {app_name}")
+        result = await self.local_pc_agent.open_application(app_name, args)
+        
+        if result.get("success"):
+            message = f"Application '{app_name}' opened successfully!"
+        else:
+            message = f"Failed to open application: {result.get('error', 'Unknown error')}"
+        
+        return {"result": message}
+
+    async def handle_pc_search_files(self, query, search_path=None, 
+                                      file_extension=None, max_results=50,
+                                      search_content=False):
+        """Handle searching for files on local PC."""
+        print(f"[ADA DEBUG] [PC] Searching for files: {query}")
+        result = await self.local_pc_agent.search_files(
+            query, search_path, file_extension, max_results, search_content
+        )
+        
+        if result.get("success"):
+            files = result.get("results", [])
+            total = result.get("total_found", 0)
+            
+            if total == 0:
+                message = f"No files found matching '{query}'."
+            else:
+                # Format results for voice response
+                file_list = []
+                for f in files[:10]:  # Limit voice output to 10 files
+                    name = f.get("name", "unknown")
+                    size = f.get("size", "")
+                    content_match = " (content match)" if f.get("content_match") else ""
+                    file_list.append(f"📄 {name} ({size}){content_match}")
+                
+                message = f"Found {total} file(s) matching '{query}':\n" + "\n".join(file_list)
+                if total > 10:
+                    message += f"\n... and {total - 10} more files"
+        else:
+            message = f"Search failed: {result.get('error', 'Unknown error')}"
+        
+        return {"result": message}
+
+    # ==================== WEBHOOK HANDLERS ====================
+
+    async def handle_webhook_send(self, url, data, method="POST"):
+        """Handle sending data to a webhook URL."""
+        print(f"[ADA DEBUG] [WEBHOOK] Sending to: {url}")
+        
+        # Parse JSON data if string
+        import json
+        if isinstance(data, str):
+            try:
+                parsed_data = json.loads(data)
+            except:
+                parsed_data = {"message": data}
+        else:
+            parsed_data = data
+        
+        result = await self.webhook_agent.send_webhook(url, parsed_data, method)
+        
+        if result.get("success"):
+            message = f"Webhook sent successfully! Status: {result.get('status_code', 'OK')}"
+        else:
+            message = f"Failed to send webhook: {result.get('error', 'Unknown error')}"
+        
+        return {"result": message}
+
+    async def handle_webhook_send_saved(self, webhook_name, data):
+        """Handle sending data to a saved webhook."""
+        print(f"[ADA DEBUG] [WEBHOOK] Sending to saved webhook: {webhook_name}")
+        
+        # Parse JSON data if string
+        import json
+        if isinstance(data, str):
+            try:
+                parsed_data = json.loads(data)
+            except:
+                parsed_data = {"message": data}
+        else:
+            parsed_data = data
+        
+        result = await self.webhook_agent.send_to_saved_webhook(webhook_name, parsed_data)
+        
+        if result.get("success"):
+            message = f"Webhook '{webhook_name}' sent successfully!"
+        else:
+            message = f"Failed to send webhook: {result.get('error', 'Unknown error')}"
+        
+        return {"result": message}
+
+    async def handle_webhook_list(self):
+        """Handle listing all webhooks."""
+        print(f"[ADA DEBUG] [WEBHOOK] Listing webhooks")
+        
+        saved = self.webhook_agent.list_saved_webhooks()
+        registered = self.webhook_agent.list_registered_webhooks()
+        
+        message = "Webhooks:\n"
+        
+        if saved.get("webhooks"):
+            message += "\nSaved (for sending):\n"
+            for w in saved["webhooks"]:
+                message += f"  - {w['name']}\n"
+        else:
+            message += "\nNo saved webhooks. Set via .env: N8N_WEBHOOK_URL, DISCORD_WEBHOOK_URL, etc.\n"
+        
+        if registered.get("webhooks"):
+            message += "\nReceiving endpoints:\n"
+            for w in registered["webhooks"]:
+                message += f"  - /webhook/{w['id']} ({w.get('source', 'unknown')})\n"
+        
+        return {"result": message}
+
+    # ==================== WHATSAPP HANDLERS ====================
+
+    async def handle_wa_send_message(self, phone, message):
+        """Handle sending a WhatsApp message."""
+        print(f"[ADA DEBUG] [WA] Sending message to: {phone}")
+        result = await self.whatsapp_agent.send_message(phone, message)
+        
+        if result.get("success"):
+            msg = f"Pesan WhatsApp berhasil dikirim ke {result.get('phone', phone)}!"
+        else:
+            msg = f"Gagal mengirim WhatsApp: {result.get('error', 'Unknown error')}"
+        
+        return {"result": msg}
+
+    async def handle_wa_check_status(self):
+        """Handle checking WhatsApp connection status."""
+        print(f"[ADA DEBUG] [WA] Checking status")
+        result = await self.whatsapp_agent.check_connection()
+        
+        if result.get("success"):
+            status = result.get("status", "unknown")
+            msg = f"WhatsApp status: {status}. Connection ID: {result.get('connection_id', 'default')}"
+        else:
+            msg = f"WhatsApp tidak terhubung: {result.get('error', 'Unknown error')}"
+        
+        return {"result": msg}
+
+    # ==================== DOCUMENT PRINTER HANDLERS ====================
+
+    async def handle_doc_list_printers(self):
+        """Handle listing available printers."""
+        print(f"[ADA DEBUG] [PRINTER] Listing printers")
+        result = await self.document_printer_agent.list_printers()
+        
+        if result.get("success"):
+            printers = result.get("printers", [])
+            default = result.get("default", "Unknown")
+            
+            if printers:
+                printer_list = "\n".join([f"  - {p['name']}" for p in printers[:10]])
+                msg = f"Ditemukan {len(printers)} printer:\n{printer_list}\n\nDefault: {default}"
+            else:
+                msg = "Tidak ada printer yang ditemukan."
+        else:
+            msg = f"Gagal mendapatkan daftar printer: {result.get('error')}"
+        
+        return {"result": msg}
+
+    async def handle_doc_print_file(self, file_path, printer_name=None, copies=1):
+        """Handle printing a file."""
+        print(f"[ADA DEBUG] [PRINTER] Printing file: {file_path}")
+        result = await self.document_printer_agent.print_file(file_path, printer_name, copies)
+        
+        if result.get("success"):
+            msg = f"File '{result.get('file')}' berhasil dikirim ke printer {result.get('printer')}!"
+        else:
+            msg = f"Gagal mencetak: {result.get('error')}"
+        
+        return {"result": msg}
+
+    async def handle_doc_print_text(self, text, printer_name=None):
+        """Handle printing text directly."""
+        print(f"[ADA DEBUG] [PRINTER] Printing text")
+        result = await self.document_printer_agent.print_text(text, printer_name)
+        
+        if result.get("success"):
+            msg = f"Teks berhasil dikirim ke printer!"
+        else:
+            msg = f"Gagal mencetak teks: {result.get('error')}"
+        
+        return {"result": msg}
+
+    async def handle_doc_printer_status(self, printer_name=None):
+        """Handle getting printer status."""
+        print(f"[ADA DEBUG] [PRINTER] Getting status")
+        result = await self.document_printer_agent.get_printer_status(printer_name)
+        
+        if result.get("success"):
+            msg = f"Printer: {result.get('printer')}\nStatus: {result.get('status')}"
+            if result.get('jobs'):
+                msg += f"\nAntrian: {result.get('jobs')} job"
+        else:
+            msg = f"Gagal mendapatkan status: {result.get('error')}"
+        
+        return {"result": msg}
+
+
     async def receive_audio(self):
         "Background task to reads from the websocket and write pcm chunks to the output queue"
         try:
@@ -718,7 +2047,30 @@ class AudioLoop:
                         print("The tool was called")
                         function_responses = []
                         for fc in response.tool_call.function_calls:
-                            if fc.name in ["generate_cad", "run_web_agent", "write_file", "read_directory", "read_file", "create_project", "switch_project", "list_projects", "list_smart_devices", "control_light", "discover_printers", "print_stl", "get_print_status", "iterate_cad"]:
+                            # All known tools including Google Workspace
+                            known_tools = [
+                                "generate_cad", "run_web_agent", "write_file", "read_directory", "read_file",
+                                "create_project", "switch_project", "list_projects",
+                                "list_smart_devices", "control_light",
+                                "discover_printers", "print_stl", "get_print_status", "iterate_cad",
+                                # Google Workspace tools
+                                "google_authenticate", "google_list_events", "google_create_event", "google_delete_event",
+                                "google_read_spreadsheet", "google_write_spreadsheet", "google_append_spreadsheet", "google_create_spreadsheet",
+                                "google_list_drive_files", "google_upload_to_drive", "google_download_from_drive", "google_create_drive_folder",
+                                "google_send_email", "google_list_emails", "google_read_email",
+                                "google_create_document", "google_read_document", "google_append_document",
+                                # n8n MCP tools
+                                "n8n_connect", "n8n_list_workflows", "n8n_search_workflows", "n8n_execute_workflow", "n8n_get_workflow_info",
+                                # Local PC tools
+                                "pc_create_file", "pc_read_file", "pc_write_file", "pc_list_folder", "pc_create_folder", "pc_open_app", "pc_search_files",
+                                # Webhook tools
+                                "webhook_send", "webhook_send_saved", "webhook_list",
+                                # WhatsApp tools
+                                "wa_send_message", "wa_check_status",
+                                # Document Printer tools
+                                "doc_list_printers", "doc_print_file", "doc_print_text", "doc_printer_status"
+                            ]
+                            if fc.name in known_tools:
                                 prompt = fc.args.get("prompt", "") # Prompt is not present for all tools
                                 
                                 # Check Permissions (Default to True if not set)
@@ -1109,6 +2461,438 @@ class AudioLoop:
                                         id=fc.id, name=fc.name, response={"result": result_str}
                                     )
                                     function_responses.append(function_response)
+
+                                # ==================== GOOGLE WORKSPACE TOOL ROUTING ====================
+                                
+                                elif fc.name == "google_authenticate":
+                                    print(f"[ADA DEBUG] [TOOL] Tool Call: 'google_authenticate'")
+                                    result = await self.handle_google_authenticate()
+                                    function_response = types.FunctionResponse(
+                                        id=fc.id, name=fc.name, response={"result": result.get("message", str(result))}
+                                    )
+                                    function_responses.append(function_response)
+
+                                elif fc.name == "google_list_events":
+                                    print(f"[ADA DEBUG] [TOOL] Tool Call: 'google_list_events'")
+                                    result = await self.handle_google_list_events(
+                                        max_results=fc.args.get("max_results", 10),
+                                        time_min=fc.args.get("time_min"),
+                                        time_max=fc.args.get("time_max")
+                                    )
+                                    function_response = types.FunctionResponse(
+                                        id=fc.id, name=fc.name, response=result
+                                    )
+                                    function_responses.append(function_response)
+
+                                elif fc.name == "google_create_event":
+                                    print(f"[ADA DEBUG] [TOOL] Tool Call: 'google_create_event'")
+                                    result = await self.handle_google_create_event(
+                                        summary=fc.args["summary"],
+                                        start_time=fc.args["start_time"],
+                                        end_time=fc.args.get("end_time"),
+                                        description=fc.args.get("description", ""),
+                                        location=fc.args.get("location", ""),
+                                        attendees=fc.args.get("attendees")
+                                    )
+                                    function_response = types.FunctionResponse(
+                                        id=fc.id, name=fc.name, response=result
+                                    )
+                                    function_responses.append(function_response)
+
+                                elif fc.name == "google_delete_event":
+                                    print(f"[ADA DEBUG] [TOOL] Tool Call: 'google_delete_event'")
+                                    result = await self.handle_google_delete_event(
+                                        event_id=fc.args["event_id"]
+                                    )
+                                    function_response = types.FunctionResponse(
+                                        id=fc.id, name=fc.name, response=result
+                                    )
+                                    function_responses.append(function_response)
+
+                                elif fc.name == "google_read_spreadsheet":
+                                    print(f"[ADA DEBUG] [TOOL] Tool Call: 'google_read_spreadsheet'")
+                                    result = await self.handle_google_read_spreadsheet(
+                                        spreadsheet_id=fc.args["spreadsheet_id"],
+                                        range_name=fc.args.get("range_name", "Sheet1!A1:Z100")
+                                    )
+                                    function_response = types.FunctionResponse(
+                                        id=fc.id, name=fc.name, response=result
+                                    )
+                                    function_responses.append(function_response)
+
+                                elif fc.name == "google_write_spreadsheet":
+                                    print(f"[ADA DEBUG] [TOOL] Tool Call: 'google_write_spreadsheet'")
+                                    result = await self.handle_google_write_spreadsheet(
+                                        spreadsheet_id=fc.args["spreadsheet_id"],
+                                        range_name=fc.args["range_name"],
+                                        values=fc.args["values"]
+                                    )
+                                    function_response = types.FunctionResponse(
+                                        id=fc.id, name=fc.name, response=result
+                                    )
+                                    function_responses.append(function_response)
+
+                                elif fc.name == "google_append_spreadsheet":
+                                    print(f"[ADA DEBUG] [TOOL] Tool Call: 'google_append_spreadsheet'")
+                                    result = await self.handle_google_append_spreadsheet(
+                                        spreadsheet_id=fc.args["spreadsheet_id"],
+                                        range_name=fc.args["range_name"],
+                                        values=fc.args["values"]
+                                    )
+                                    function_response = types.FunctionResponse(
+                                        id=fc.id, name=fc.name, response=result
+                                    )
+                                    function_responses.append(function_response)
+
+                                elif fc.name == "google_create_spreadsheet":
+                                    print(f"[ADA DEBUG] [TOOL] Tool Call: 'google_create_spreadsheet'")
+                                    result = await self.handle_google_create_spreadsheet(
+                                        title=fc.args["title"],
+                                        sheets=fc.args.get("sheets")
+                                    )
+                                    function_response = types.FunctionResponse(
+                                        id=fc.id, name=fc.name, response=result
+                                    )
+                                    function_responses.append(function_response)
+
+                                elif fc.name == "google_list_drive_files":
+                                    print(f"[ADA DEBUG] [TOOL] Tool Call: 'google_list_drive_files'")
+                                    result = await self.handle_google_list_drive_files(
+                                        query=fc.args.get("query"),
+                                        max_results=fc.args.get("max_results", 20),
+                                        folder_id=fc.args.get("folder_id")
+                                    )
+                                    function_response = types.FunctionResponse(
+                                        id=fc.id, name=fc.name, response=result
+                                    )
+                                    function_responses.append(function_response)
+
+                                elif fc.name == "google_upload_to_drive":
+                                    print(f"[ADA DEBUG] [TOOL] Tool Call: 'google_upload_to_drive'")
+                                    result = await self.handle_google_upload_to_drive(
+                                        file_path=fc.args["file_path"],
+                                        folder_id=fc.args.get("folder_id"),
+                                        file_name=fc.args.get("file_name")
+                                    )
+                                    function_response = types.FunctionResponse(
+                                        id=fc.id, name=fc.name, response=result
+                                    )
+                                    function_responses.append(function_response)
+
+                                elif fc.name == "google_download_from_drive":
+                                    print(f"[ADA DEBUG] [TOOL] Tool Call: 'google_download_from_drive'")
+                                    result = await self.handle_google_download_from_drive(
+                                        file_id=fc.args["file_id"],
+                                        destination_path=fc.args["destination_path"]
+                                    )
+                                    function_response = types.FunctionResponse(
+                                        id=fc.id, name=fc.name, response=result
+                                    )
+                                    function_responses.append(function_response)
+
+                                elif fc.name == "google_create_drive_folder":
+                                    print(f"[ADA DEBUG] [TOOL] Tool Call: 'google_create_drive_folder'")
+                                    result = await self.handle_google_create_drive_folder(
+                                        folder_name=fc.args["folder_name"],
+                                        parent_id=fc.args.get("parent_id")
+                                    )
+                                    function_response = types.FunctionResponse(
+                                        id=fc.id, name=fc.name, response=result
+                                    )
+                                    function_responses.append(function_response)
+
+                                elif fc.name == "google_send_email":
+                                    print(f"[ADA DEBUG] [TOOL] Tool Call: 'google_send_email'")
+                                    result = await self.handle_google_send_email(
+                                        to=fc.args["to"],
+                                        subject=fc.args["subject"],
+                                        body=fc.args["body"],
+                                        cc=fc.args.get("cc"),
+                                        bcc=fc.args.get("bcc")
+                                    )
+                                    function_response = types.FunctionResponse(
+                                        id=fc.id, name=fc.name, response=result
+                                    )
+                                    function_responses.append(function_response)
+
+                                elif fc.name == "google_list_emails":
+                                    print(f"[ADA DEBUG] [TOOL] Tool Call: 'google_list_emails'")
+                                    result = await self.handle_google_list_emails(
+                                        max_results=fc.args.get("max_results", 10),
+                                        query=fc.args.get("query")
+                                    )
+                                    function_response = types.FunctionResponse(
+                                        id=fc.id, name=fc.name, response=result
+                                    )
+                                    function_responses.append(function_response)
+
+                                elif fc.name == "google_read_email":
+                                    print(f"[ADA DEBUG] [TOOL] Tool Call: 'google_read_email'")
+                                    result = await self.handle_google_read_email(
+                                        message_id=fc.args["message_id"]
+                                    )
+                                    function_response = types.FunctionResponse(
+                                        id=fc.id, name=fc.name, response=result
+                                    )
+                                    function_responses.append(function_response)
+
+                                elif fc.name == "google_create_document":
+                                    print(f"[ADA DEBUG] [TOOL] Tool Call: 'google_create_document'")
+                                    result = await self.handle_google_create_document(
+                                        title=fc.args["title"],
+                                        content=fc.args.get("content")
+                                    )
+                                    function_response = types.FunctionResponse(
+                                        id=fc.id, name=fc.name, response=result
+                                    )
+                                    function_responses.append(function_response)
+
+                                elif fc.name == "google_read_document":
+                                    print(f"[ADA DEBUG] [TOOL] Tool Call: 'google_read_document'")
+                                    result = await self.handle_google_read_document(
+                                        document_id=fc.args["document_id"]
+                                    )
+                                    function_response = types.FunctionResponse(
+                                        id=fc.id, name=fc.name, response=result
+                                    )
+                                    function_responses.append(function_response)
+
+                                elif fc.name == "google_append_document":
+                                    print(f"[ADA DEBUG] [TOOL] Tool Call: 'google_append_document'")
+                                    result = await self.handle_google_append_document(
+                                        document_id=fc.args["document_id"],
+                                        content=fc.args["content"]
+                                    )
+                                    function_response = types.FunctionResponse(
+                                        id=fc.id, name=fc.name, response=result
+                                    )
+                                    function_responses.append(function_response)
+
+                                # ==================== N8N MCP TOOL ROUTING ====================
+
+                                elif fc.name == "n8n_connect":
+                                    print(f"[ADA DEBUG] [TOOL] Tool Call: 'n8n_connect'")
+                                    result = await self.handle_n8n_connect()
+                                    function_response = types.FunctionResponse(
+                                        id=fc.id, name=fc.name, response=result
+                                    )
+                                    function_responses.append(function_response)
+
+                                elif fc.name == "n8n_list_workflows":
+                                    print(f"[ADA DEBUG] [TOOL] Tool Call: 'n8n_list_workflows'")
+                                    result = await self.handle_n8n_list_workflows()
+                                    function_response = types.FunctionResponse(
+                                        id=fc.id, name=fc.name, response=result
+                                    )
+                                    function_responses.append(function_response)
+
+                                elif fc.name == "n8n_search_workflows":
+                                    print(f"[ADA DEBUG] [TOOL] Tool Call: 'n8n_search_workflows'")
+                                    result = await self.handle_n8n_search_workflows(
+                                        query=fc.args["query"]
+                                    )
+                                    function_response = types.FunctionResponse(
+                                        id=fc.id, name=fc.name, response=result
+                                    )
+                                    function_responses.append(function_response)
+
+                                elif fc.name == "n8n_execute_workflow":
+                                    print(f"[ADA DEBUG] [TOOL] Tool Call: 'n8n_execute_workflow'")
+                                    result = await self.handle_n8n_execute_workflow(
+                                        workflow_name=fc.args["workflow_name"],
+                                        input_data=fc.args.get("input_data")
+                                    )
+                                    function_response = types.FunctionResponse(
+                                        id=fc.id, name=fc.name, response=result
+                                    )
+                                    function_responses.append(function_response)
+
+                                elif fc.name == "n8n_get_workflow_info":
+                                    print(f"[ADA DEBUG] [TOOL] Tool Call: 'n8n_get_workflow_info'")
+                                    result = await self.handle_n8n_get_workflow_info(
+                                        workflow_name=fc.args["workflow_name"]
+                                    )
+                                    function_response = types.FunctionResponse(
+                                        id=fc.id, name=fc.name, response=result
+                                    )
+                                    function_responses.append(function_response)
+
+                                # ==================== LOCAL PC TOOLS ====================
+
+                                elif fc.name == "pc_create_file":
+                                    print(f"[ADA DEBUG] [TOOL] Tool Call: 'pc_create_file'")
+                                    result = await self.handle_pc_create_file(
+                                        path=fc.args["path"],
+                                        content=fc.args.get("content", "")
+                                    )
+                                    function_response = types.FunctionResponse(
+                                        id=fc.id, name=fc.name, response=result
+                                    )
+                                    function_responses.append(function_response)
+
+                                elif fc.name == "pc_read_file":
+                                    print(f"[ADA DEBUG] [TOOL] Tool Call: 'pc_read_file'")
+                                    result = await self.handle_pc_read_file(
+                                        path=fc.args["path"]
+                                    )
+                                    function_response = types.FunctionResponse(
+                                        id=fc.id, name=fc.name, response=result
+                                    )
+                                    function_responses.append(function_response)
+
+                                elif fc.name == "pc_write_file":
+                                    print(f"[ADA DEBUG] [TOOL] Tool Call: 'pc_write_file'")
+                                    result = await self.handle_pc_write_file(
+                                        path=fc.args["path"],
+                                        content=fc.args["content"]
+                                    )
+                                    function_response = types.FunctionResponse(
+                                        id=fc.id, name=fc.name, response=result
+                                    )
+                                    function_responses.append(function_response)
+
+                                elif fc.name == "pc_list_folder":
+                                    print(f"[ADA DEBUG] [TOOL] Tool Call: 'pc_list_folder'")
+                                    result = await self.handle_pc_list_folder(
+                                        path=fc.args.get("path", "Documents")
+                                    )
+                                    function_response = types.FunctionResponse(
+                                        id=fc.id, name=fc.name, response=result
+                                    )
+                                    function_responses.append(function_response)
+
+                                elif fc.name == "pc_create_folder":
+                                    print(f"[ADA DEBUG] [TOOL] Tool Call: 'pc_create_folder'")
+                                    result = await self.handle_pc_create_folder(
+                                        path=fc.args["path"]
+                                    )
+                                    function_response = types.FunctionResponse(
+                                        id=fc.id, name=fc.name, response=result
+                                    )
+                                    function_responses.append(function_response)
+
+                                elif fc.name == "pc_open_app":
+                                    print(f"[ADA DEBUG] [TOOL] Tool Call: 'pc_open_app'")
+                                    result = await self.handle_pc_open_app(
+                                        app_name=fc.args["app_name"],
+                                        args=fc.args.get("args")
+                                    )
+                                    function_response = types.FunctionResponse(
+                                        id=fc.id, name=fc.name, response=result
+                                    )
+                                    function_responses.append(function_response)
+
+                                elif fc.name == "pc_search_files":
+                                    print(f"[ADA DEBUG] [TOOL] Tool Call: 'pc_search_files'")
+                                    result = await self.handle_pc_search_files(
+                                        query=fc.args["query"],
+                                        search_path=fc.args.get("search_path"),
+                                        file_extension=fc.args.get("file_extension"),
+                                        max_results=fc.args.get("max_results", 50),
+                                        search_content=fc.args.get("search_content", False)
+                                    )
+                                    function_response = types.FunctionResponse(
+                                        id=fc.id, name=fc.name, response=result
+                                    )
+                                    function_responses.append(function_response)
+
+                                # ==================== WEBHOOK TOOLS ====================
+
+                                elif fc.name == "webhook_send":
+                                    print(f"[ADA DEBUG] [TOOL] Tool Call: 'webhook_send'")
+                                    result = await self.handle_webhook_send(
+                                        url=fc.args["url"],
+                                        data=fc.args["data"],
+                                        method=fc.args.get("method", "POST")
+                                    )
+                                    function_response = types.FunctionResponse(
+                                        id=fc.id, name=fc.name, response=result
+                                    )
+                                    function_responses.append(function_response)
+
+                                elif fc.name == "webhook_send_saved":
+                                    print(f"[ADA DEBUG] [TOOL] Tool Call: 'webhook_send_saved'")
+                                    result = await self.handle_webhook_send_saved(
+                                        webhook_name=fc.args["webhook_name"],
+                                        data=fc.args["data"]
+                                    )
+                                    function_response = types.FunctionResponse(
+                                        id=fc.id, name=fc.name, response=result
+                                    )
+                                    function_responses.append(function_response)
+
+                                elif fc.name == "webhook_list":
+                                    print(f"[ADA DEBUG] [TOOL] Tool Call: 'webhook_list'")
+                                    result = await self.handle_webhook_list()
+                                    function_response = types.FunctionResponse(
+                                        id=fc.id, name=fc.name, response=result
+                                    )
+                                    function_responses.append(function_response)
+
+                                # ==================== WHATSAPP TOOLS ====================
+
+                                elif fc.name == "wa_send_message":
+                                    print(f"[ADA DEBUG] [TOOL] Tool Call: 'wa_send_message'")
+                                    result = await self.handle_wa_send_message(
+                                        phone=fc.args["phone"],
+                                        message=fc.args["message"]
+                                    )
+                                    function_response = types.FunctionResponse(
+                                        id=fc.id, name=fc.name, response=result
+                                    )
+                                    function_responses.append(function_response)
+
+                                elif fc.name == "wa_check_status":
+                                    print(f"[ADA DEBUG] [TOOL] Tool Call: 'wa_check_status'")
+                                    result = await self.handle_wa_check_status()
+                                    function_response = types.FunctionResponse(
+                                        id=fc.id, name=fc.name, response=result
+                                    )
+                                    function_responses.append(function_response)
+
+                                # ==================== DOCUMENT PRINTER TOOLS ====================
+
+                                elif fc.name == "doc_list_printers":
+                                    print(f"[ADA DEBUG] [TOOL] Tool Call: 'doc_list_printers'")
+                                    result = await self.handle_doc_list_printers()
+                                    function_response = types.FunctionResponse(
+                                        id=fc.id, name=fc.name, response=result
+                                    )
+                                    function_responses.append(function_response)
+
+                                elif fc.name == "doc_print_file":
+                                    print(f"[ADA DEBUG] [TOOL] Tool Call: 'doc_print_file'")
+                                    result = await self.handle_doc_print_file(
+                                        file_path=fc.args["file_path"],
+                                        printer_name=fc.args.get("printer_name"),
+                                        copies=fc.args.get("copies", 1)
+                                    )
+                                    function_response = types.FunctionResponse(
+                                        id=fc.id, name=fc.name, response=result
+                                    )
+                                    function_responses.append(function_response)
+
+                                elif fc.name == "doc_print_text":
+                                    print(f"[ADA DEBUG] [TOOL] Tool Call: 'doc_print_text'")
+                                    result = await self.handle_doc_print_text(
+                                        text=fc.args["text"],
+                                        printer_name=fc.args.get("printer_name")
+                                    )
+                                    function_response = types.FunctionResponse(
+                                        id=fc.id, name=fc.name, response=result
+                                    )
+                                    function_responses.append(function_response)
+
+                                elif fc.name == "doc_printer_status":
+                                    print(f"[ADA DEBUG] [TOOL] Tool Call: 'doc_printer_status'")
+                                    result = await self.handle_doc_printer_status(
+                                        printer_name=fc.args.get("printer_name")
+                                    )
+                                    function_response = types.FunctionResponse(
+                                        id=fc.id, name=fc.name, response=result
+                                    )
+                                    function_responses.append(function_response)
+
                         if function_responses:
                             await self.session.send_tool_response(function_responses=function_responses)
                 

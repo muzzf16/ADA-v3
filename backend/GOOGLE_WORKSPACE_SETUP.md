@@ -1,0 +1,161 @@
+# Google Workspace Integration Setup Guide
+
+Panduan ini menjelaskan cara mengaktifkan integrasi Google Workspace di A.D.A V2.
+
+## 📋 Layanan yang Tersedia
+
+| Layanan | Contoh Perintah Suara |
+|---------|----------------------|
+| **📅 Google Calendar** | "Ada, jadwalkan meeting besok jam 10 pagi" |
+| **📊 Google Sheets** | "Ada, baca spreadsheet saya" |
+| **📁 Google Drive** | "Ada, upload file ini ke Drive" |
+| **✉️ Gmail** | "Ada, kirim email ke tim marketing" |
+| **📝 Google Docs** | "Ada, buat dokumen proposal baru" |
+
+---
+
+## 🔧 Langkah Setup
+
+### Step 1: Buat Google Cloud Project
+
+1. Buka [Google Cloud Console](https://console.cloud.google.com/)
+2. Klik **"Select a project"** → **"New Project"**
+3. Beri nama project (contoh: "ADA-V2-Integration")
+4. Klik **"Create"**
+
+### Step 2: Aktifkan APIs
+
+Di Google Cloud Console, aktifkan API berikut:
+
+1. Buka **APIs & Services** → **Library**
+2. Cari dan aktifkan setiap API berikut:
+   - **Google Calendar API**
+   - **Google Sheets API**
+   - **Google Drive API**
+   - **Gmail API**
+   - **Google Docs API**
+
+### Step 3: Konfigurasi OAuth Consent Screen
+
+1. Buka **APIs & Services** → **OAuth consent screen**
+2. Pilih **External** → **Create**
+3. Isi form:
+   - **App name**: ADA V2
+   - **User support email**: Email Anda
+   - **Developer contact information**: Email Anda
+4. Klik **Save and Continue**
+5. Di halaman **Scopes**, klik **Add or Remove Scopes**
+6. Tambahkan scopes berikut:
+   - `https://www.googleapis.com/auth/calendar`
+   - `https://www.googleapis.com/auth/spreadsheets`
+   - `https://www.googleapis.com/auth/drive`
+   - `https://www.googleapis.com/auth/gmail.send`
+   - `https://www.googleapis.com/auth/gmail.readonly`
+   - `https://www.googleapis.com/auth/documents`
+7. Klik **Update** → **Save and Continue**
+8. Di halaman **Test users**, tambahkan email Google Anda
+9. Klik **Save and Continue** → **Back to Dashboard**
+
+### Step 4: Buat OAuth Credentials
+
+1. Buka **APIs & Services** → **Credentials**
+2. Klik **+ Create Credentials** → **OAuth client ID**
+3. Pilih **Application type**: **Desktop app**
+4. Beri nama (contoh: "ADA Desktop")
+5. Klik **Create**
+6. Klik **Download JSON**
+7. Rename file yang didownload menjadi `credentials.json`
+8. Pindahkan file ke folder `backend/`:
+   ```
+   ada_v2/
+   └── backend/
+       └── credentials.json  ← Taruh di sini!
+   ```
+
+### Step 5: Install Dependencies
+
+```bash
+# Aktifkan virtual environment
+conda activate ada_v2
+
+# Install dependencies baru
+pip install google-api-python-client google-auth google-auth-oauthlib google-auth-httplib2
+```
+
+### Step 6: Autentikasi Pertama
+
+Saat pertama kali menggunakan fitur Google Workspace:
+
+1. Jalankan A.D.A V2
+2. Katakan: **"Ada, authenticate with Google"** atau minta bantuan terkait Google Workspace
+3. Browser akan terbuka untuk login
+4. Pilih akun Google Anda
+5. Klik **"Continue"** (aplikasi belum diverifikasi - ini normal untuk development)
+6. Klik **"Continue"** lagi untuk memberikan izin
+7. Setelah sukses, kembali ke A.D.A
+
+**Token akan disimpan di `backend/google_token.json`** sehingga Anda tidak perlu login lagi.
+
+---
+
+## 🎤 Contoh Perintah Suara
+
+### Calendar
+- "Ada, apa jadwal saya hari ini?"
+- "Ada, jadwalkan meeting dengan Tim Design besok jam 2 siang"
+- "Ada, hapus meeting yang tadi saya buat"
+
+### Sheets
+- "Ada, baca data dari spreadsheet inventory"
+- "Ada, tambahkan data penjualan hari ini ke spreadsheet"
+- "Ada, buat spreadsheet baru bernama Laporan Bulanan"
+
+### Drive
+- "Ada, tampilkan file di Google Drive saya"
+- "Ada, upload file CAD ini ke Drive"
+- "Ada, buat folder baru bernama Projects 2024"
+
+### Gmail
+- "Ada, cek email terbaru saya"
+- "Ada, kirim email ke bos@perusahaan.com dengan subjek Laporan Mingguan"
+- "Ada, baca email dari HR"
+
+### Docs
+- "Ada, buat dokumen baru berjudul Proposal Proyek"
+- "Ada, baca dokumen meeting notes"
+- "Ada, tambahkan catatan ke dokumen tersebut"
+
+---
+
+## ⚠️ Troubleshooting
+
+### "credentials.json not found"
+Pastikan Anda sudah mendownload OAuth credentials dan menaruhnya di folder `backend/`.
+
+### "Token has been expired or revoked"
+Hapus file `backend/google_token.json` dan autentikasi ulang.
+
+### "Access Not Configured"
+Pastikan semua API yang diperlukan sudah diaktifkan di Google Cloud Console.
+
+### "This app isn't verified"
+Ini normal untuk development. Klik **"Continue"** untuk melanjutkan.
+
+---
+
+## 🔒 Keamanan
+
+- **credentials.json** dan **google_token.json** berisi data sensitif
+- Jangan pernah commit file-file ini ke Git
+- File sudah ditambahkan ke `.gitignore`
+- Token hanya berlaku untuk akun yang melakukan autentikasi
+
+---
+
+## 📫 Support
+
+Jika ada masalah, pastikan:
+1. Semua API sudah diaktifkan
+2. `credentials.json` ada di folder yang benar
+3. Email Anda sudah ditambahkan sebagai test user
+4. Anda sudah menjalankan autentikasi pertama

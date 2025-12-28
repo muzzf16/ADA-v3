@@ -1,15 +1,44 @@
 import cv2
 import os
+import sys
 
 def capture_reference_face(output_path="reference.jpg"):
     """
     Opens the webcam and captures a frame when the user presses 's' or 'Space'.
     Saves the frame to the specified output path.
     """
-    cap = cv2.VideoCapture(0)
-
-    if not cap.isOpened():
-        print("Error: Could not open webcam.")
+    cap = None
+    
+    # Try different camera backends on Windows
+    backends = [
+        (cv2.CAP_DSHOW, "DirectShow"),      # Usually works best on Windows
+        (cv2.CAP_MSMF, "Media Foundation"),
+        (cv2.CAP_ANY, "Auto-detect"),
+    ]
+    
+    for backend, name in backends:
+        print(f"Trying camera with {name} backend...")
+        cap = cv2.VideoCapture(0, backend)
+        
+        if cap.isOpened():
+            ret, test_frame = cap.read()
+            if ret and test_frame is not None:
+                print(f"✓ Camera opened successfully with {name}")
+                break
+            else:
+                print(f"✗ {name}: Could not read frame")
+                cap.release()
+                cap = None
+        else:
+            print(f"✗ {name}: Could not open camera")
+            cap = None
+    
+    if cap is None:
+        print("\n[ERROR] Could not open webcam with any backend.")
+        print("Please check:")
+        print("  1. Close other apps using camera (browser, Teams, Zoom)")
+        print("  2. Check Windows Settings > Privacy > Camera access")
+        print("  3. Try restarting your computer")
         return
 
     print("Press 's' or 'SPACE' to capture your face.")

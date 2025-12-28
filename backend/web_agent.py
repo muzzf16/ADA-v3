@@ -19,6 +19,8 @@ SCREEN_WIDTH = 1440
 SCREEN_HEIGHT = 900
 # UPDATED: Use the specific Computer Use preview model
 MODEL_ID = "gemini-2.5-computer-use-preview-10-2025"
+MAX_TURNS = 8  # Reduced from 20 to prevent Gemini Live timeout
+SESSION_TIMEOUT = 120  # 2 minute max session
 
 class WebAgent:
     def __init__(self):
@@ -233,9 +235,17 @@ class WebAgent:
                 )
             ]
 
-            MAX_TURNS = 20
+            MAX_TURNS = 8  # Limit for faster completion
+            session_start = time.time()  # Track session duration
             
             for turn in range(MAX_TURNS):
+                # Check session timeout
+                if time.time() - session_start > SESSION_TIMEOUT:
+                    print(f"[TIMEOUT] Session exceeded {SESSION_TIMEOUT}s limit")
+                    final_response = "Task interrupted: Time limit reached. Partial progress made."
+                    if update_callback: await update_callback(None, "Session timeout reached")
+                    break
+                    
                 print(f"\n--- Turn {turn + 1} ---")
                 
                 try:

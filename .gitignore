@@ -16,6 +16,10 @@ projects/
 output.stl
 cad_outputs/
 
+# Google Workspace Credentials (SENSITIVE!)
+backend/credentials.json
+backend/google_token.json
+
 # Node.js
 node_modules/
 dist/

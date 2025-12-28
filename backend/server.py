@@ -8,7 +8,7 @@ if sys.platform == 'win32':
 
 import socketio
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 import asyncio
 import threading
 import sys
@@ -108,8 +108,22 @@ authenticator = None
 kasa_agent = KasaAgent(known_devices=SETTINGS.get("kasa_devices"))
 # tool_permissions is now SETTINGS["tool_permissions"]
 
+# Webhook Agent for receiving/sending webhooks
+from webhook_agent import get_webhook_agent, WebhookAgent
+webhook_agent: WebhookAgent = None
+
+async def on_webhook_received(source: str, data: dict):
+    """Callback when webhook is received - notify connected clients."""
+    global sio
+    print(f"[WEBHOOK] Received from {source}: {data.get('webhook_id', 'unknown')}")
+    await sio.emit('webhook_received', {
+        'source': source,
+        'data': data
+    })
+
 @app.on_event("startup")
 async def startup_event():
+    global webhook_agent
     import sys
     print(f"[SERVER DEBUG] Startup Event Triggered")
     print(f"[SERVER DEBUG] Python Version: {sys.version}")
@@ -123,10 +137,46 @@ async def startup_event():
 
     print("[SERVER] Startup: Initializing Kasa Agent...")
     await kasa_agent.initialize()
+    
+    print("[SERVER] Startup: Initializing Webhook Agent...")
+    webhook_agent = get_webhook_agent(on_webhook_received=on_webhook_received)
 
 @app.get("/status")
 async def status():
     return {"status": "running", "service": "A.D.A Backend"}
+
+# ==================== WEBHOOK ENDPOINTS ====================
+
+@app.post("/webhook/{webhook_id}")
+async def receive_webhook(webhook_id: str, request: Request):
+    """Receive incoming webhook."""
+    global webhook_agent
+    try:
+        # Get JSON body
+        try:
+            data = await request.json()
+        except:
+            data = {"raw": await request.body()}
+        
+        # Get headers
+        headers = dict(request.headers)
+        
+        # Process webhook
+        if webhook_agent:
+            result = await webhook_agent.process_incoming_webhook(webhook_id, data, headers)
+            return result
+        else:
+            return {"success": False, "error": "Webhook agent not initialized"}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+@app.get("/webhook/list")
+async def list_webhooks():
+    """List registered webhooks."""
+    global webhook_agent
+    if webhook_agent:
+        return webhook_agent.list_registered_webhooks()
+    return {"success": False, "error": "Webhook agent not initialized"}
 
 @sio.event
 async def connect(sid, environ):
@@ -981,7 +1031,7 @@ async def update_tool_permissions(sid, data):
 if __name__ == "__main__":
     uvicorn.run(
         "server:app_socketio", 
-        host="127.0.0.1", 
+        host="0.0.0.0", 
         port=8000, 
         reload=False, # Reload enabled causes spawn of worker which might miss the event loop policy patch
         loop="asyncio",
