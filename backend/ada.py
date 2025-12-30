@@ -36,19 +36,7 @@ DEFAULT_MODE = "camera"
 load_dotenv()
 client = genai.Client(http_options={"api_version": "v1beta"}, api_key=os.getenv("GEMINI_API_KEY"))
 
-# Function definitions
-generate_cad = {
-    "name": "generate_cad",
-    "description": "Generates a 3D CAD model based on a prompt.",
-    "parameters": {
-        "type": "OBJECT",
-        "properties": {
-            "prompt": {"type": "STRING", "description": "The description of the object to generate."}
-        },
-        "required": ["prompt"]
-    },
-    "behavior": "NON_BLOCKING"
-}
+
 
 run_web_agent = {
     "name": "run_web_agent",
@@ -132,53 +120,13 @@ control_light_tool = {
     }
 }
 
-discover_printers_tool = {
-    "name": "discover_printers",
-    "description": "Discovers 3D printers available on the local network.",
-    "parameters": {
-        "type": "OBJECT",
-        "properties": {},
-    }
-}
 
-print_stl_tool = {
-    "name": "print_stl",
-    "description": "Prints an STL file to a 3D printer. Handles slicing the STL to G-code and uploading to the printer.",
-    "parameters": {
-        "type": "OBJECT",
-        "properties": {
-            "stl_path": {"type": "STRING", "description": "Path to STL file, or 'current' for the most recent CAD model."},
-            "printer": {"type": "STRING", "description": "Printer name or IP address."},
-            "profile": {"type": "STRING", "description": "Optional slicer profile name."}
-        },
-        "required": ["stl_path", "printer"]
-    }
-}
 
-get_print_status_tool = {
-    "name": "get_print_status",
-    "description": "Gets the current status of a 3D printer including progress, time remaining, and temperatures.",
-    "parameters": {
-        "type": "OBJECT",
-        "properties": {
-            "printer": {"type": "STRING", "description": "Printer name or IP address."}
-        },
-        "required": ["printer"]
-    }
-}
 
-iterate_cad_tool = {
-    "name": "iterate_cad",
-    "description": "Modifies or iterates on the current CAD design based on user feedback. Use this when the user asks to adjust, change, modify, or iterate on the existing 3D model (e.g., 'make it taller', 'add a handle', 'reduce the thickness').",
-    "parameters": {
-        "type": "OBJECT",
-        "properties": {
-            "prompt": {"type": "STRING", "description": "The changes or modifications to apply to the current design."}
-        },
-        "required": ["prompt"]
-    },
-    "behavior": "NON_BLOCKING"
-}
+
+
+
+
 
 # ==================== GOOGLE WORKSPACE TOOLS ====================
 
@@ -287,6 +235,32 @@ google_create_spreadsheet_tool = {
             "sheets": {"type": "STRING", "description": "Comma-separated list of sheet names to create. Optional."}
         },
         "required": ["title"]
+    }
+}
+
+google_add_sheet_tool = {
+    "name": "google_add_sheet",
+    "description": "Adds a new sheet to an existing Google Spreadsheet.",
+    "parameters": {
+        "type": "OBJECT",
+        "properties": {
+            "spreadsheet_id": {"type": "STRING", "description": "The ID of the spreadsheet."},
+            "title": {"type": "STRING", "description": "Title of the new sheet."}
+        },
+        "required": ["spreadsheet_id", "title"]
+    }
+}
+
+google_delete_sheet_tool = {
+    "name": "google_delete_sheet",
+    "description": "Deletes a sheet from a Google Spreadsheet. PLEASE BE CAREFUL: This action is permanent.",
+    "parameters": {
+        "type": "OBJECT",
+        "properties": {
+            "spreadsheet_id": {"type": "STRING", "description": "The ID of the spreadsheet."},
+            "sheet_title": {"type": "STRING", "description": "The title of the sheet to delete."}
+        },
+        "required": ["spreadsheet_id", "sheet_title"]
     }
 }
 
@@ -426,6 +400,33 @@ google_append_document_tool = {
     }
 }
 
+# Forms Tools
+google_create_form_tool = {
+    "name": "google_create_form",
+    "description": "Creates a new Google Form. Use when user wants to create a survey, questionnaire, or form.",
+    "parameters": {
+        "type": "OBJECT",
+        "properties": {
+            "title": {"type": "STRING", "description": "Title of the form."},
+            "document_title": {"type": "STRING", "description": "Filename in Drive. Optional, defaults to title."}
+        },
+        "required": ["title"]
+    }
+}
+
+# Slides Tools
+google_create_presentation_tool = {
+    "name": "google_create_presentation",
+    "description": "Creates a new Google Slides presentation. Use when user wants to create slides or a presentation.",
+    "parameters": {
+        "type": "OBJECT",
+        "properties": {
+            "title": {"type": "STRING", "description": "Title of the presentation."}
+        },
+        "required": ["title"]
+    }
+}
+
 # Google Workspace tools list
 google_workspace_tools = [
     google_authenticate_tool,
@@ -436,6 +437,8 @@ google_workspace_tools = [
     google_write_spreadsheet_tool,
     google_append_spreadsheet_tool,
     google_create_spreadsheet_tool,
+    google_add_sheet_tool,
+    google_delete_sheet_tool,
     google_list_drive_files_tool,
     google_upload_to_drive_tool,
     google_download_from_drive_tool,
@@ -446,7 +449,10 @@ google_workspace_tools = [
     google_create_document_tool,
     google_read_document_tool,
     google_append_document_tool,
+    google_create_form_tool,
+    google_create_presentation_tool,
 ]
+
 
 # ==================== N8N MCP TOOLS ====================
 
@@ -754,7 +760,42 @@ document_printer_tools = [
     doc_printer_status_tool,
 ]
 
-tools = [{'google_search': {}}, {"function_declarations": [generate_cad, run_web_agent, create_project_tool, switch_project_tool, list_projects_tool, list_smart_devices_tool, control_light_tool, discover_printers_tool, print_stl_tool, get_print_status_tool, iterate_cad_tool] + google_workspace_tools + n8n_mcp_tools + local_pc_tools + webhook_tools + whatsapp_tools + document_printer_tools + tools_list[0]['function_declarations'][1:]}]
+# ==================== YAHOO MAIL TOOLS ====================
+
+yahoo_send_email_tool = {
+    "name": "yahoo_send_email",
+    "description": "Sends an email via Yahoo Mail. Use when user wants to send email from their Yahoo account.",
+    "parameters": {
+        "type": "OBJECT",
+        "properties": {
+            "to": {"type": "STRING", "description": "Recipient email address."},
+            "subject": {"type": "STRING", "description": "Email subject."},
+            "body": {"type": "STRING", "description": "Email body content."}
+        },
+        "required": ["to", "subject", "body"]
+    }
+}
+
+yahoo_list_emails_tool = {
+    "name": "yahoo_list_emails",
+    "description": "Lists recent emails from Yahoo Mail inbox. Use when user wants to check their Yahoo emails.",
+    "parameters": {
+        "type": "OBJECT",
+        "properties": {
+            "limit": {"type": "INTEGER", "description": "Maximum emails to return. Default 5."}
+        },
+        "required": []
+    }
+}
+
+# Yahoo Mail tools list
+yahoo_mail_tools = [
+    yahoo_send_email_tool,
+    yahoo_list_emails_tool,
+]
+
+tools = [{'google_search': {}}, {"function_declarations": [run_web_agent, create_project_tool, switch_project_tool, list_projects_tool, list_smart_devices_tool, control_light_tool] + google_workspace_tools + n8n_mcp_tools + local_pc_tools + webhook_tools + whatsapp_tools + document_printer_tools + yahoo_mail_tools + tools_list[0]['function_declarations'][1:]}]
+
 
 # --- CONFIG UPDATE: Enabled Transcription ---
 config = types.LiveConnectConfig(
@@ -779,10 +820,10 @@ config = types.LiveConnectConfig(
 
 pya = pyaudio.PyAudio()
 
-from cad_agent import CadAgent
+
 from web_agent import WebAgent
 from kasa_agent import KasaAgent
-from printer_agent import PrinterAgent
+
 from google_workspace_agent import get_workspace_agent
 from n8n_mcp_agent import get_n8n_agent
 from local_pc_agent import get_local_pc_agent
@@ -826,18 +867,8 @@ class AudioLoop:
         self.session = None
         
         # Create CadAgent with thought callback
-        def handle_cad_thought(thought_text):
-            if self.on_cad_thought:
-                self.on_cad_thought(thought_text)
-        
-        def handle_cad_status(status_info):
-            if self.on_cad_status:
-                self.on_cad_status(status_info)
-        
-        self.cad_agent = CadAgent(on_thought=handle_cad_thought, on_status=handle_cad_status)
         self.web_agent = WebAgent()
         self.kasa_agent = kasa_agent if kasa_agent else KasaAgent()
-        self.printer_agent = PrinterAgent()
         self.google_workspace_agent = get_workspace_agent()
         self.n8n_mcp_agent = get_n8n_agent()
         print("[SERVER] Startup: Initializing Yahoo Mail Agent...")
@@ -846,7 +877,7 @@ class AudioLoop:
         self.webhook_agent = get_webhook_agent()
         self.whatsapp_agent = get_whatsapp_agent()
         self.document_printer_agent = get_document_printer_agent()
-        self.yahoo_mail_agent = get_yahoo_agent()
+        self.document_printer_agent = get_document_printer_agent()
 
         self.send_text_task = None
         self.stop_event = asyncio.Event()
@@ -1058,66 +1089,7 @@ class AudioLoop:
                 print(f"Error reading audio: {e}")
                 await asyncio.sleep(0.1)
 
-    async def handle_cad_request(self, prompt):
-        print(f"[ADA DEBUG] [CAD] Background Task Started: handle_cad_request('{prompt}')")
-        if self.on_cad_status:
-            self.on_cad_status("generating")
-            
-        # Auto-create project if stuck in temp
-        if self.project_manager.current_project == "temp":
-            import datetime
-            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-            new_project_name = f"Project_{timestamp}"
-            print(f"[ADA DEBUG] [CAD] Auto-creating project: {new_project_name}")
-            
-            success, msg = self.project_manager.create_project(new_project_name)
-            if success:
-                self.project_manager.switch_project(new_project_name)
-                # Notify User (Optional, or rely on update)
-                try:
-                    await self.session.send(input=f"System Notification: Automatic Project Creation. Switched to new project '{new_project_name}'.", end_of_turn=False)
-                    if self.on_project_update:
-                         self.on_project_update(new_project_name)
-                except Exception as e:
-                    print(f"[ADA DEBUG] [ERR] Failed to notify auto-project: {e}")
 
-        # Get project cad folder path
-        cad_output_dir = str(self.project_manager.get_current_project_path() / "cad")
-        
-        # Call the secondary agent with project path
-        cad_data = await self.cad_agent.generate_prototype(prompt, output_dir=cad_output_dir)
-        
-        if cad_data:
-            print(f"[ADA DEBUG] [OK] CadAgent returned data successfully.")
-            print(f"[ADA DEBUG] [INFO] Data Check: {len(cad_data.get('vertices', []))} vertices, {len(cad_data.get('edges', []))} edges.")
-            
-            if self.on_cad_data:
-                print(f"[ADA DEBUG] [SEND] Dispatching data to frontend callback...")
-                self.on_cad_data(cad_data)
-                print(f"[ADA DEBUG] [SENT] Dispatch complete.")
-            
-            # Save to Project
-            if 'file_path' in cad_data:
-                self.project_manager.save_cad_artifact(cad_data['file_path'], prompt)
-            else:
-                 # Fallback (legacy support)
-                 self.project_manager.save_cad_artifact("output.stl", prompt)
-
-            # Notify the model that the task is done - this triggers speech about completion
-            completion_msg = "System Notification: CAD generation is complete! The 3D model is now displayed for the user. Let them know it's ready."
-            try:
-                await self.session.send(input=completion_msg, end_of_turn=True)
-                print(f"[ADA DEBUG] [NOTE] Sent completion notification to model.")
-            except Exception as e:
-                 print(f"[ADA DEBUG] [ERR] Failed to send completion notification: {e}")
-
-        else:
-            print(f"[ADA DEBUG] [ERR] CadAgent returned None.")
-            # Optionally notify failure
-            try:
-                await self.session.send(input="System Notification: CAD generation failed.", end_of_turn=True)
-            except Exception:
-                pass
 
 
 
@@ -1397,6 +1369,36 @@ class AudioLoop:
             message = f"Failed to create spreadsheet: {result.get('error', 'Unknown error')}"
         
         return {"result": message, "spreadsheet_id": result.get("spreadsheet_id")}
+
+    async def handle_google_add_sheet(self, spreadsheet_id, title):
+        """Handle adding a sheet."""
+        print(f"[ADA DEBUG] [GOOGLE] Adding sheet: {title}")
+        result = await self.google_workspace_agent.add_sheet(
+            spreadsheet_id=spreadsheet_id,
+            title=title
+        )
+        
+        if result.get("success"):
+            message = f"Sheet '{title}' added successfully! ID: {result.get('sheet_id')}"
+        else:
+            message = f"Failed to add sheet: {result.get('error', 'Unknown error')}"
+            
+        return {"result": message}
+
+    async def handle_google_delete_sheet(self, spreadsheet_id, sheet_title):
+        """Handle deleting a sheet."""
+        print(f"[ADA DEBUG] [GOOGLE] Deleting sheet: {sheet_title}")
+        result = await self.google_workspace_agent.delete_sheet(
+            spreadsheet_id=spreadsheet_id,
+            sheet_title=sheet_title
+        )
+        
+        if result.get("success"):
+            message = f"Sheet '{sheet_title}' deleted successfully."
+        else:
+            message = f"Failed to delete sheet: {result.get('error', 'Unknown error')}"
+            
+        return {"result": message}
 
     async def handle_google_list_drive_files(self, query=None, max_results=20, folder_id=None):
         """Handle listing Drive files."""
@@ -1969,6 +1971,71 @@ class AudioLoop:
         
         return {"result": msg}
 
+    # ==================== GOOGLE FORMS HANDLERS ====================
+
+    async def handle_google_create_form(self, title, document_title=None):
+        """Handle creating a Google Form."""
+        print(f"[ADA DEBUG] [GOOGLE] Creating form: {title}")
+        result = await self.google_workspace_agent.create_form(title, document_title)
+        
+        if result.get("success"):
+            msg = f"Form '{title}' berhasil dibuat!\nURL: {result.get('url')}\nEdit: {result.get('edit_url')}"
+        else:
+            msg = f"Gagal membuat form: {result.get('error')}"
+        
+        return {"result": msg}
+
+    # ==================== GOOGLE SLIDES HANDLERS ====================
+
+    async def handle_google_create_presentation(self, title):
+        """Handle creating a Google Slides presentation."""
+        print(f"[ADA DEBUG] [GOOGLE] Creating presentation: {title}")
+        result = await self.google_workspace_agent.create_presentation(title)
+        
+        if result.get("success"):
+            msg = f"Presentasi '{title}' berhasil dibuat!\nURL: {result.get('edit_url')}"
+        else:
+            msg = f"Gagal membuat presentasi: {result.get('error')}"
+        
+        return {"result": msg}
+
+    # ==================== YAHOO MAIL HANDLERS ====================
+
+    async def handle_yahoo_send_email(self, to, subject, body):
+        """Handle sending email via Yahoo Mail."""
+        print(f"[ADA DEBUG] [YAHOO] Sending email to: {to}")
+        result = await asyncio.to_thread(
+            self.yahoo_mail_agent.send_email, to, subject, body
+        )
+        
+        if result.get("success"):
+            msg = f"Email Yahoo berhasil dikirim ke {to}!"
+        else:
+            msg = f"Gagal mengirim email Yahoo: {result.get('error')}"
+        
+        return {"result": msg}
+
+    async def handle_yahoo_list_emails(self, limit=5):
+        """Handle listing Yahoo emails."""
+        print(f"[ADA DEBUG] [YAHOO] Listing emails (limit={limit})")
+        result = await asyncio.to_thread(
+            self.yahoo_mail_agent.get_recent_emails, limit
+        )
+        
+        if result.get("success"):
+            emails = result.get("emails", [])
+            if emails:
+                email_list = []
+                for e in emails[:5]:
+                    email_list.append(f"- {e.get('subject')} (dari: {e.get('from')})")
+                msg = f"Email terbaru di Yahoo ({len(emails)}):\n" + "\n".join(email_list)
+            else:
+                msg = "Tidak ada email di inbox Yahoo."
+        else:
+            msg = f"Gagal membaca email Yahoo: {result.get('error')}"
+        
+        return {"result": msg}
+
 
     async def receive_audio(self):
         "Background task to reads from the websocket and write pcm chunks to the output queue"
@@ -2053,16 +2120,18 @@ class AudioLoop:
                         for fc in response.tool_call.function_calls:
                             # All known tools including Google Workspace
                             known_tools = [
-                                "generate_cad", "run_web_agent", "write_file", "read_directory", "read_file",
+                                "run_web_agent", "write_file", "read_directory", "read_file",
                                 "create_project", "switch_project", "list_projects",
                                 "list_smart_devices", "control_light",
-                                "discover_printers", "print_stl", "get_print_status", "iterate_cad",
                                 # Google Workspace tools
                                 "google_authenticate", "google_list_events", "google_create_event", "google_delete_event",
                                 "google_read_spreadsheet", "google_write_spreadsheet", "google_append_spreadsheet", "google_create_spreadsheet",
+                                "google_add_sheet", "google_delete_sheet",
                                 "google_list_drive_files", "google_upload_to_drive", "google_download_from_drive", "google_create_drive_folder",
                                 "google_send_email", "google_list_emails", "google_read_email",
                                 "google_create_document", "google_read_document", "google_append_document",
+                                # Google Forms/Slides tools
+                                "google_create_form", "google_create_presentation",
                                 # n8n MCP tools
                                 "n8n_connect", "n8n_list_workflows", "n8n_search_workflows", "n8n_execute_workflow", "n8n_get_workflow_info",
                                 # Local PC tools
@@ -2072,7 +2141,9 @@ class AudioLoop:
                                 # WhatsApp tools
                                 "wa_send_message", "wa_check_status",
                                 # Document Printer tools
-                                "doc_list_printers", "doc_print_file", "doc_print_text", "doc_printer_status"
+                                "doc_list_printers", "doc_print_file", "doc_print_text", "doc_printer_status",
+                                # Yahoo Mail tools
+                                "yahoo_send_email", "yahoo_list_emails"
                             ]
                             if fc.name in known_tools:
                                 prompt = fc.args.get("prompt", "") # Prompt is not present for all tools
@@ -2121,28 +2192,8 @@ class AudioLoop:
                                         function_responses.append(function_response)
                                         continue
 
-                                    if not confirmed:
-                                        print(f"[ADA DEBUG] [DENY] Tool call '{fc.name}' denied by user.")
-                                        function_response = types.FunctionResponse(
-                                            id=fc.id,
-                                            name=fc.name,
-                                            response={
-                                                "result": "User denied the request to use this tool.",
-                                            }
-                                        )
-                                        function_responses.append(function_response)
-                                        continue
-
                                 # If confirmed (or no callback configured, or auto-allowed), proceed
-                                if fc.name == "generate_cad":
-                                    print(f"\n[ADA DEBUG] --------------------------------------------------")
-                                    print(f"[ADA DEBUG] [TOOL] Tool Call Detected: 'generate_cad'")
-                                    print(f"[ADA DEBUG] [IN] Arguments: prompt='{prompt}'")
-                                    
-                                    asyncio.create_task(self.handle_cad_request(prompt))
-                                    # No function response needed - model already acknowledged when user asked
-                                
-                                elif fc.name == "run_web_agent":
+                                if fc.name == "run_web_agent":
                                     print(f"[ADA DEBUG] [TOOL] Tool Call: 'run_web_agent' with prompt='{prompt}'")
                                     asyncio.create_task(self.handle_web_agent_request(prompt))
                                     
@@ -2157,8 +2208,29 @@ class AudioLoop:
                                     print(f"[ADA DEBUG] [RESPONSE] Sending function response: {function_response}")
                                     function_responses.append(function_response)
 
+                                elif fc.name == "google_create_spreadsheet":
+                                    title = fc.args.get("title")
+                                    sheets = fc.args.get("sheets")
+                                    print(f"[ADA DEBUG] [TOOL] Tool Call: 'google_create_spreadsheet' with title='{title}'")
+                                    function_responses.append(await self._execute_tool(
+                                        fc, self.handle_google_create_spreadsheet, title=title, sheets=sheets
+                                    ))
+                                
+                                elif fc.name == "google_add_sheet":
+                                    spreadsheet_id = fc.args.get("spreadsheet_id")
+                                    title = fc.args.get("title")
+                                    print(f"[ADA DEBUG] [TOOL] Tool Call: 'google_add_sheet' with title='{title}'")
+                                    function_responses.append(await self._execute_tool(
+                                        fc, self.handle_google_add_sheet, spreadsheet_id=spreadsheet_id, title=title
+                                    ))
 
-
+                                elif fc.name == "google_delete_sheet":
+                                    spreadsheet_id = fc.args.get("spreadsheet_id")
+                                    sheet_title = fc.args.get("sheet_title")
+                                    print(f"[ADA DEBUG] [TOOL] Tool Call: 'google_delete_sheet' with title='{sheet_title}'")
+                                    function_responses.append(await self._execute_tool(
+                                        fc, self.handle_google_delete_sheet, spreadsheet_id=spreadsheet_id, sheet_title=sheet_title
+                                    ))
                                 elif fc.name == "write_file":
                                     path = fc.args["path"]
                                     content = fc.args["content"]
@@ -2357,114 +2429,13 @@ class AudioLoop:
                                     )
                                     function_responses.append(function_response)
 
-                                elif fc.name == "discover_printers":
-                                    print(f"[ADA DEBUG] [TOOL] Tool Call: 'discover_printers'")
-                                    printers = await self.printer_agent.discover_printers()
-                                    # Format for model
-                                    if printers:
-                                        printer_list = []
-                                        for p in printers:
-                                            printer_list.append(f"{p['name']} ({p['host']}:{p['port']}, type: {p['printer_type']})")
-                                        result_str = "Found Printers:\n" + "\n".join(printer_list)
-                                    else:
-                                        result_str = "No printers found on network. Ensure printers are on and running OctoPrint/Moonraker."
-                                    
-                                    function_response = types.FunctionResponse(
-                                        id=fc.id, name=fc.name, response={"result": result_str}
-                                    )
-                                    function_responses.append(function_response)
 
-                                elif fc.name == "print_stl":
-                                    stl_path = fc.args["stl_path"]
-                                    printer = fc.args["printer"]
-                                    profile = fc.args.get("profile")
-                                    
-                                    print(f"[ADA DEBUG] [TOOL] Tool Call: 'print_stl' STL='{stl_path}' Printer='{printer}'")
-                                    
-                                    # Resolve 'current' to project STL
-                                    if stl_path.lower() == "current":
-                                        stl_path = "output.stl" # Let printer agent resolve it in root_path
 
-                                    # Get current project path
-                                    project_path = str(self.project_manager.get_current_project_path())
-                                    
-                                    result = await self.printer_agent.print_stl(
-                                        stl_path, 
-                                        printer, 
-                                        profile, 
-                                        root_path=project_path
-                                    )
-                                    result_str = result.get("message", "Unknown result")
-                                    
-                                    function_response = types.FunctionResponse(
-                                        id=fc.id, name=fc.name, response={"result": result_str}
-                                    )
-                                    function_responses.append(function_response)
 
-                                elif fc.name == "get_print_status":
-                                    printer = fc.args["printer"]
-                                    print(f"[ADA DEBUG] [TOOL] Tool Call: 'get_print_status' Printer='{printer}'")
-                                    
-                                    status = await self.printer_agent.get_print_status(printer)
-                                    if status:
-                                        result_str = f"Printer: {status.printer}\n"
-                                        result_str += f"State: {status.state}\n"
-                                        result_str += f"Progress: {status.progress_percent:.1f}%\n"
-                                        if status.time_remaining:
-                                            result_str += f"Time Remaining: {status.time_remaining}\n"
-                                        if status.time_elapsed:
-                                            result_str += f"Time Elapsed: {status.time_elapsed}\n"
-                                        if status.filename:
-                                            result_str += f"File: {status.filename}\n"
-                                        if status.temperatures:
-                                            temps = status.temperatures
-                                            if "hotend" in temps:
-                                                result_str += f"Hotend: {temps['hotend']['current']:.0f}°C / {temps['hotend']['target']:.0f}°C\n"
-                                            if "bed" in temps:
-                                                result_str += f"Bed: {temps['bed']['current']:.0f}°C / {temps['bed']['target']:.0f}°C"
-                                    else:
-                                        result_str = f"Could not get status for printer '{printer}'. Ensure it is discovered first."
-                                    
-                                    function_response = types.FunctionResponse(
-                                        id=fc.id, name=fc.name, response={"result": result_str}
-                                    )
-                                    function_responses.append(function_response)
 
-                                elif fc.name == "iterate_cad":
-                                    prompt = fc.args["prompt"]
-                                    print(f"[ADA DEBUG] [TOOL] Tool Call: 'iterate_cad' Prompt='{prompt}'")
-                                    
-                                    # Emit status
-                                    if self.on_cad_status:
-                                        self.on_cad_status("generating")
-                                    
-                                    # Get project cad folder path
-                                    cad_output_dir = str(self.project_manager.get_current_project_path() / "cad")
-                                    
-                                    # Call CadAgent to iterate on the design
-                                    cad_data = await self.cad_agent.iterate_prototype(prompt, output_dir=cad_output_dir)
-                                    
-                                    if cad_data:
-                                        print(f"[ADA DEBUG] [OK] CadAgent iteration returned data successfully.")
-                                        
-                                        # Dispatch to frontend
-                                        if self.on_cad_data:
-                                            print(f"[ADA DEBUG] [SEND] Dispatching iterated CAD data to frontend...")
-                                            self.on_cad_data(cad_data)
-                                            print(f"[ADA DEBUG] [SENT] Dispatch complete.")
-                                        
-                                        # Save to Project
-                                        self.project_manager.save_cad_artifact("output.stl", f"Iteration: {prompt}")
-                                        
-                                        result_str = f"Successfully iterated design: {prompt}. The updated 3D model is now displayed."
-                                    else:
-                                        print(f"[ADA DEBUG] [ERR] CadAgent iteration returned None.")
-                                        result_str = f"Failed to iterate design with prompt: {prompt}"
-                                    
-                                    function_response = types.FunctionResponse(
-                                        id=fc.id, name=fc.name, response={"result": result_str}
-                                    )
-                                    function_responses.append(function_response)
+
+
+
 
                                 # ==================== GOOGLE WORKSPACE TOOL ROUTING ====================
                                 
@@ -2897,7 +2868,55 @@ class AudioLoop:
                                     )
                                     function_responses.append(function_response)
 
+                                # ==================== GOOGLE FORMS/SLIDES TOOLS ====================
+
+                                elif fc.name == "google_create_form":
+                                    print(f"[ADA DEBUG] [TOOL] Tool Call: 'google_create_form'")
+                                    result = await self.handle_google_create_form(
+                                        title=fc.args["title"],
+                                        document_title=fc.args.get("document_title")
+                                    )
+                                    function_response = types.FunctionResponse(
+                                        id=fc.id, name=fc.name, response=result
+                                    )
+                                    function_responses.append(function_response)
+
+                                elif fc.name == "google_create_presentation":
+                                    print(f"[ADA DEBUG] [TOOL] Tool Call: 'google_create_presentation'")
+                                    result = await self.handle_google_create_presentation(
+                                        title=fc.args["title"]
+                                    )
+                                    function_response = types.FunctionResponse(
+                                        id=fc.id, name=fc.name, response=result
+                                    )
+                                    function_responses.append(function_response)
+
+                                # ==================== YAHOO MAIL TOOLS ====================
+
+                                elif fc.name == "yahoo_send_email":
+                                    print(f"[ADA DEBUG] [TOOL] Tool Call: 'yahoo_send_email'")
+                                    result = await self.handle_yahoo_send_email(
+                                        to=fc.args["to"],
+                                        subject=fc.args["subject"],
+                                        body=fc.args["body"]
+                                    )
+                                    function_response = types.FunctionResponse(
+                                        id=fc.id, name=fc.name, response=result
+                                    )
+                                    function_responses.append(function_response)
+
+                                elif fc.name == "yahoo_list_emails":
+                                    print(f"[ADA DEBUG] [TOOL] Tool Call: 'yahoo_list_emails'")
+                                    result = await self.handle_yahoo_list_emails(
+                                        limit=fc.args.get("limit", 5)
+                                    )
+                                    function_response = types.FunctionResponse(
+                                        id=fc.id, name=fc.name, response=result
+                                    )
+                                    function_responses.append(function_response)
+
                         if function_responses:
+
                             await self.session.send_tool_response(function_responses=function_responses)
                 
                 # Turn/Response Loop Finished

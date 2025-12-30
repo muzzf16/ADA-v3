@@ -1,7 +1,6 @@
 {
     "face_auth_enabled": false,
     "tool_permissions": {
-        "generate_cad": false,
         "run_web_agent": true,
         "write_file": true,
         "read_directory": true,
@@ -9,6 +8,7 @@
         "create_project": true,
         "switch_project": true,
         "list_projects": true,
+        "generate_cad": false,
         "create_directory": true,
         "iterate_cad": false,
         "print_stl": false,
@@ -16,6 +16,8 @@
         "control_light": false,
         "list_smart_devices": true
     },
+    "kasa_devices": [],
+    "camera_flipped": true,
     "printers": [
         {
             "name": "Creality K1",
@@ -31,7 +33,5 @@
             "type": "moonraker",
             "camera_url": null
         }
-    ],
-    "kasa_devices": [],
-    "camera_flipped": true
+    ]
 }

@@ -528,6 +528,152 @@ class GoogleWorkspaceAgent:
         except Exception as e:
             return {"success": False, "error": str(e)}
 
+    async def add_sheet(
+        self,
+        spreadsheet_id: str,
+        title: str
+    ) -> Dict[str, Any]:
+        """
+        Add a new sheet to a spreadsheet.
+        
+        Args:
+            spreadsheet_id: The ID of the spreadsheet
+            title: The title of the new sheet
+            
+        Returns:
+            Dict with new sheet info or error
+        """
+        if not self.is_authenticated():
+            return {"success": False, "error": "Not authenticated."}
+        
+        try:
+            service = self._get_sheets_service()
+            
+            requests = [{
+                'addSheet': {
+                    'properties': {
+                        'title': title
+                    }
+                }
+            }]
+            
+            body = {
+                'requests': requests
+            }
+            
+            response = await asyncio.to_thread(
+                lambda: service.spreadsheets().batchUpdate(
+                    spreadsheetId=spreadsheet_id,
+                    body=body
+                ).execute()
+            )
+            
+            new_sheet_props = response['replies'][0]['addSheet']['properties']
+            
+            return {
+                "success": True,
+                "sheet_id": new_sheet_props['sheetId'],
+                "title": new_sheet_props['title'],
+                "message": f"Sheet '{title}' added successfully."
+            }
+            
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+
+    async def get_sheet_id_by_title(
+        self, 
+        spreadsheet_id: str, 
+        title: str
+    ) -> Optional[int]:
+        """
+        Get sheet ID by title.
+        
+        Args:
+            spreadsheet_id: Spreadsheet ID
+            title: Sheet title
+            
+        Returns:
+            Sheet ID (int) or None if not found
+        """
+        if not self.is_authenticated():
+            return None
+            
+        try:
+            service = self._get_sheets_service()
+            spreadsheet = await asyncio.to_thread(
+                lambda: service.spreadsheets().get(
+                    spreadsheetId=spreadsheet_id
+                ).execute()
+            )
+            
+            for sheet in spreadsheet.get('sheets', []):
+                props = sheet.get('properties', {})
+                if props.get('title') == title:
+                    return props.get('sheetId')
+            
+            return None
+            
+        except Exception as e:
+            print(f"[GOOGLE] Error getting sheet ID: {e}")
+            return None
+
+    async def delete_sheet(
+        self,
+        spreadsheet_id: str,
+        sheet_id: int = None,
+        sheet_title: str = None
+    ) -> Dict[str, Any]:
+        """
+        Delete a sheet from a spreadsheet.
+        
+        Args:
+            spreadsheet_id: The ID of the spreadsheet
+            sheet_id: The ID of the sheet to delete (int)
+            sheet_title: The title of the sheet to delete (alternative to sheet_id)
+            
+        Returns:
+            Dict with result or error
+        """
+        if not self.is_authenticated():
+            return {"success": False, "error": "Not authenticated."}
+        
+        try:
+            # Resolve ID from title if needed
+            if sheet_id is None and sheet_title:
+                sheet_id = await self.get_sheet_id_by_title(spreadsheet_id, sheet_title)
+                if sheet_id is None:
+                    return {"success": False, "error": f"Sheet with title '{sheet_title}' not found."}
+            
+            if sheet_id is None:
+                 return {"success": False, "error": "Must provide either sheet_id or sheet_title."}
+            
+            service = self._get_sheets_service()
+            
+            requests = [{
+                'deleteSheet': {
+                    'sheetId': sheet_id
+                }
+            }]
+            
+            body = {
+                'requests': requests
+            }
+            
+            await asyncio.to_thread(
+                lambda: service.spreadsheets().batchUpdate(
+                    spreadsheetId=spreadsheet_id,
+                    body=body
+                ).execute()
+            )
+            
+            return {
+                "success": True,
+                "message": f"Sheet (ID: {sheet_id}) deleted successfully."
+            }
+            
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+
     # ==================== DRIVE FUNCTIONS ====================
     
     async def list_drive_files(

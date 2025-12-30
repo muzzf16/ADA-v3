@@ -38,7 +38,7 @@ class LocalPCAgent:
         'calculator': 'calc',
         'paint': 'mspaint',
         'explorer': 'explorer',
-        'browser': 'start',
+        'browser': 'start ""',  # Opens default browser with empty URL (homepage)
         'chrome': 'start chrome',
         'edge': 'start msedge',
         'firefox': 'start firefox',
@@ -50,6 +50,7 @@ class LocalPCAgent:
         'cmd': 'cmd',
         'powershell': 'powershell',
     }
+
     
     def __init__(self):
         """Initialize the Local PC Agent."""
@@ -378,8 +379,11 @@ class LocalPCAgent:
             cmd = self.ALLOWED_APPS[app_lower]
             
             if self.system == 'Windows':
-                # Build full command string for shell execution
-                if args:
+                # Special handling for 'browser' without URL - open default browser with about:blank
+                if app_lower == 'browser' and not args:
+                    # Use 'start http://' to open default browser
+                    full_cmd = 'start "" "https://www.google.com"'
+                elif args:
                     full_cmd = f'{cmd} "{args}"'
                 else:
                     full_cmd = cmd
@@ -393,6 +397,7 @@ class LocalPCAgent:
                     subprocess.Popen([opener, args])
                 else:
                     subprocess.Popen([opener, cmd])
+
             
             return {
                 "success": True,

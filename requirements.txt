@@ -13,15 +13,11 @@ mss
 playwright
 # Smart Home
 python-kasa
-# 3D Printing
-zeroconf>=0.131.0
-aiohttp>=3.9.0
 # Utilities
 python-dotenv
 # Face & Hand tracking
 mediapipe
-# CAD Generation
-build123d
+
 # Google Workspace Integration
 google-api-python-client>=2.100.0
 google-auth>=2.23.0
