@@ -141,7 +141,7 @@ async def startup_event():
 
 @app.get("/status")
 async def status():
-    return {"status": "running", "service": "A.D.A Backend"}
+    return {"status": "running", "service": "K.E.N.E.S Backend"}
 
 # ==================== WEBHOOK ENDPOINTS ====================
 
@@ -179,7 +179,7 @@ async def list_webhooks():
 @sio.event
 async def connect(sid, environ):
     print(f"Client connected: {sid}")
-    await sio.emit('status', {'msg': 'Connected to A.D.A Backend'}, room=sid)
+    await sio.emit('status', {'msg': 'Connected to K.E.N.E.S Backend'}, room=sid)
 
     global authenticator
     
@@ -251,7 +251,7 @@ async def start_audio(sid, data=None):
              loop_task = None
         else:
              print("Audio loop already running. Re-connecting client to session.")
-             await sio.emit('status', {'msg': 'A.D.A Already Running'})
+             await sio.emit('status', {'msg': 'K.E.N.E.S Already Running'})
              return
 
 
@@ -363,7 +363,7 @@ async def stop_audio(sid):
         audio_loop.stop() 
         print("Stopping Audio Loop")
         audio_loop = None
-        await sio.emit('status', {'msg': 'A.D.A Stopped'})
+        await sio.emit('status', {'msg': 'K.E.N.E.S Stopped'})
 
 @sio.event
 async def pause_audio(sid):

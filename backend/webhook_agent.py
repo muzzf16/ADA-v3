@@ -1,6 +1,6 @@
 """
-Webhook Agent - Handles webhook receiving and sending for A.D.A
-Allows A.D.A to receive notifications from external services and send data to webhooks.
+Webhook Agent - Handles webhook receiving and sending for K.E.N.E.S
+Allows K.E.N.E.S to receive notifications from external services and send data to webhooks.
 """
 
 import os
@@ -138,7 +138,7 @@ class WebhookAgent:
         webhook["last_triggered"] = datetime.now().isoformat()
         webhook["trigger_count"] = webhook.get("trigger_count", 0) + 1
         
-        # Format message for A.D.A
+        # Format message for K.E.N.E.S
         event_data = {
             "webhook_id": webhook_id,
             "source": webhook.get("source", "unknown"),

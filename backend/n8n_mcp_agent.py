@@ -1,6 +1,6 @@
 """
 n8n MCP Agent - Client for n8n MCP Server
-Allows A.D.A to connect to n8n and execute workflows via MCP protocol.
+Allows K.E.N.E.S to connect to n8n and execute workflows via MCP protocol.
 Uses n8n's built-in MCP tools: search_workflows, execute_workflow, get_workflow_details.
 """
 
@@ -200,7 +200,7 @@ class N8nMCPAgent:
             "protocolVersion": "2024-11-05",
             "capabilities": {},
             "clientInfo": {
-                "name": "A.D.A",
+                "name": "K.E.N.E.S",
                 "version": "2.0"
             }
         })

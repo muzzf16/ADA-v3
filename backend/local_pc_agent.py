@@ -1,6 +1,6 @@
 """
 Local PC Agent - Handles local file system and application operations
-Allows A.D.A to interact with the user's local PC.
+Allows K.E.N.E.S to interact with the user's local PC.
 """
 
 import os

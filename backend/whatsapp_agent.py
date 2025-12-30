@@ -1,5 +1,5 @@
 """
-WhatsApp Agent - Handles WhatsApp messaging for A.D.A
+WhatsApp Agent - Handles WhatsApp messaging for K.E.N.E.S
 Integrates with local WhatsApp Dashboard API.
 """
 

@@ -1,5 +1,5 @@
 """
-Google Workspace Agent for A.D.A V2
+Google Workspace Agent for K.E.N.E.S V2
 Integrates Google Calendar, Sheets, Drive, Gmail, and Docs
 """
 

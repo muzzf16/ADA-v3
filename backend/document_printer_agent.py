@@ -1,6 +1,6 @@
 """
 Document Printer Agent - Handles document printing to local and network printers.
-Allows A.D.A to print documents, PDFs, and images.
+Allows K.E.N.E.S to print documents, PDFs, and images.
 """
 
 import os
