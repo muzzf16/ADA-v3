@@ -1,16 +1,18 @@
 # Google Workspace Integration Setup Guide
 
-Panduan ini menjelaskan cara mengaktifkan integrasi Google Workspace di A.D.A V2.
+Panduan ini menjelaskan cara mengaktifkan integrasi Google Workspace di A.S.P.A V1.
 
 ## 📋 Layanan yang Tersedia
 
 | Layanan | Contoh Perintah Suara |
 |---------|----------------------|
-| **📅 Google Calendar** | "Ada, jadwalkan meeting besok jam 10 pagi" |
-| **📊 Google Sheets** | "Ada, baca spreadsheet saya" |
-| **📁 Google Drive** | "Ada, upload file ini ke Drive" |
-| **✉️ Gmail** | "Ada, kirim email ke tim marketing" |
-| **📝 Google Docs** | "Ada, buat dokumen proposal baru" |
+| **📅 Google Calendar** | "Aspa, jadwalkan meeting besok jam 10 pagi" |
+| **📊 Google Sheets** | "Aspa, baca spreadsheet saya" |
+| **📁 Google Drive** | "Aspa, upload file ini ke Drive" |
+| **✉️ Gmail** | "Aspa, kirim email ke tim marketing" |
+| **📝 Google Docs** | "Aspa, buat dokumen proposal baru" |
+| **📋 Google Forms** | "Ada, buat form pendaftaran baru" |
+| **📽️ Google Slides** | "Ada, buat presentasi project update" |
 
 ---
 
@@ -34,13 +36,15 @@ Di Google Cloud Console, aktifkan API berikut:
    - **Google Drive API**
    - **Gmail API**
    - **Google Docs API**
+   - **Google Forms API**
+   - **Google Slides API**
 
 ### Step 3: Konfigurasi OAuth Consent Screen
 
 1. Buka **APIs & Services** → **OAuth consent screen**
 2. Pilih **External** → **Create**
 3. Isi form:
-   - **App name**: ADA V2
+   - **App name**: ASPA V1
    - **User support email**: Email Anda
    - **Developer contact information**: Email Anda
 4. Klik **Save and Continue**
@@ -52,6 +56,8 @@ Di Google Cloud Console, aktifkan API berikut:
    - `https://www.googleapis.com/auth/gmail.send`
    - `https://www.googleapis.com/auth/gmail.readonly`
    - `https://www.googleapis.com/auth/documents`
+   - `https://www.googleapis.com/auth/forms.body`
+   - `https://www.googleapis.com/auth/presentations`
 7. Klik **Update** → **Save and Continue**
 8. Di halaman **Test users**, tambahkan email Google Anda
 9. Klik **Save and Continue** → **Back to Dashboard**
@@ -61,7 +67,7 @@ Di Google Cloud Console, aktifkan API berikut:
 1. Buka **APIs & Services** → **Credentials**
 2. Klik **+ Create Credentials** → **OAuth client ID**
 3. Pilih **Application type**: **Desktop app**
-4. Beri nama (contoh: "ADA Desktop")
+4. Beri nama (contoh: "ASPA Desktop")
 5. Klik **Create**
 6. Klik **Download JSON**
 7. Rename file yang didownload menjadi `credentials.json`
@@ -86,8 +92,8 @@ pip install google-api-python-client google-auth google-auth-oauthlib google-aut
 
 Saat pertama kali menggunakan fitur Google Workspace:
 
-1. Jalankan A.D.A V2
-2. Katakan: **"Ada, authenticate with Google"** atau minta bantuan terkait Google Workspace
+1. Jalankan A.S.P.A V1
+2. Katakan: **"Aspa, authenticate with Google"** atau minta bantuan terkait Google Workspace
 3. Browser akan terbuka untuk login
 4. Pilih akun Google Anda
 5. Klik **"Continue"** (aplikasi belum diverifikasi - ini normal untuk development)
@@ -100,30 +106,37 @@ Saat pertama kali menggunakan fitur Google Workspace:
 
 ## 🎤 Contoh Perintah Suara
 
+
 ### Calendar
-- "Ada, apa jadwal saya hari ini?"
-- "Ada, jadwalkan meeting dengan Tim Design besok jam 2 siang"
-- "Ada, hapus meeting yang tadi saya buat"
+- "Aspa, apa jadwal saya hari ini?"
+- "Aspa, jadwalkan meeting dengan Tim Design besok jam 2 siang"
+- "Aspa, hapus meeting yang tadi saya buat"
 
 ### Sheets
-- "Ada, baca data dari spreadsheet inventory"
-- "Ada, tambahkan data penjualan hari ini ke spreadsheet"
-- "Ada, buat spreadsheet baru bernama Laporan Bulanan"
+- "Aspa, baca data dari spreadsheet inventory"
+- "Aspa, tambahkan data penjualan hari ini ke spreadsheet"
+- "Aspa, buat spreadsheet baru bernama Laporan Bulanan"
 
 ### Drive
-- "Ada, tampilkan file di Google Drive saya"
-- "Ada, upload file CAD ini ke Drive"
-- "Ada, buat folder baru bernama Projects 2024"
+- "Aspa, tampilkan file di Google Drive saya"
+- "Aspa, upload file CAD ini ke Drive"
+- "Aspa, buat folder baru bernama Projects 2024"
 
 ### Gmail
-- "Ada, cek email terbaru saya"
-- "Ada, kirim email ke bos@perusahaan.com dengan subjek Laporan Mingguan"
-- "Ada, baca email dari HR"
+- "Aspa, cek email terbaru saya"
+- "Aspa, kirim email ke bos@perusahaan.com dengan subjek Laporan Mingguan"
+- "Aspa, baca email dari HR"
 
 ### Docs
-- "Ada, buat dokumen baru berjudul Proposal Proyek"
-- "Ada, baca dokumen meeting notes"
-- "Ada, tambahkan catatan ke dokumen tersebut"
+- "Aspa, buat dokumen baru berjudul Proposal Proyek"
+- "Aspa, baca dokumen meeting notes"
+- "Aspa, tambahkan catatan ke dokumen tersebut"
+
+### Forms
+- "Aspa, buat google form baru berjudul Survey Pelanggan"
+
+### Slides
+- "Aspa, buat presentasi baru berjudul Q1 Review"
 
 ---
 

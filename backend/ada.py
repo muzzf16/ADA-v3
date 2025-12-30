@@ -762,7 +762,7 @@ config = types.LiveConnectConfig(
     # We switch these from [] to {} to enable them with default settings
     output_audio_transcription={}, 
     input_audio_transcription={},
-    system_instruction="Your name is Ada, which stands for Advanced Design Assistant. "
+    system_instruction="Your name is Aspa, which stands for Advanced Smart Personal Assistant. "
         "You have a witty and charming personality. "
         "Your creator is Naz, and you address him as 'Sir'. "
         "When answering, respond using complete and concise sentences to keep a quick pacing and keep the conversation flowing. "
@@ -789,6 +789,7 @@ from local_pc_agent import get_local_pc_agent
 from webhook_agent import get_webhook_agent
 from whatsapp_agent import get_whatsapp_agent
 from document_printer_agent import get_document_printer_agent
+from yahoo_mail_agent import get_yahoo_agent
 
 class AudioLoop:
     def __init__(self, video_mode=DEFAULT_MODE, on_audio_data=None, on_video_frame=None, on_cad_data=None, on_web_data=None, on_transcription=None, on_tool_confirmation=None, on_cad_status=None, on_cad_thought=None, on_project_update=None, on_device_update=None, on_error=None, input_device_index=None, input_device_name=None, output_device_index=None, kasa_agent=None):
@@ -839,10 +840,13 @@ class AudioLoop:
         self.printer_agent = PrinterAgent()
         self.google_workspace_agent = get_workspace_agent()
         self.n8n_mcp_agent = get_n8n_agent()
+        print("[SERVER] Startup: Initializing Yahoo Mail Agent...")
+        self.yahoo_mail_agent = get_yahoo_agent()
         self.local_pc_agent = get_local_pc_agent()
         self.webhook_agent = get_webhook_agent()
         self.whatsapp_agent = get_whatsapp_agent()
         self.document_printer_agent = get_document_printer_agent()
+        self.yahoo_mail_agent = get_yahoo_agent()
 
         self.send_text_task = None
         self.stop_event = asyncio.Event()

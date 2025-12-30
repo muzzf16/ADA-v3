@@ -138,6 +138,7 @@ const ToolsModule = ({
                         ? 'border-blue-400 bg-blue-400/10 text-blue-400 hover:bg-blue-400/20 shadow-[0_0_15px_rgba(96,165,250,0.3)]'
                         : 'border-cyan-900 text-cyan-700 hover:border-blue-500 hover:text-blue-500'
                         } `}
+                    title="Web Browser"
                 >
                     <Globe size={24} />
                 </button>

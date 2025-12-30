@@ -6,9 +6,9 @@
 ![Gemini](https://img.shields.io/badge/Google%20Gemini-Native%20Audio-4285F4?logo=google)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
-> **A.D.A** = **A**dvanced **D**esign **A**ssistant
+> **A.S.P.A** = **A**dvanced **S**mart **P**ersonal **A**ssistant
 
-ADA V2 is a sophisticated AI assistant designed for multimodal interaction. It combines Google's Gemini 2.5 Native Audio with computer vision, gesture control, and 3D CAD generation in a Electron desktop application.
+ASPA V1 is a sophisticated AI Personal Assistant for multimodal interaction. It combines Google's Gemini 2.5 Native Audio with computer vision, gesture control, and office automation in a Electron desktop application.
 
 ---
 

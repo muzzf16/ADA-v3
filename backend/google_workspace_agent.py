@@ -26,6 +26,8 @@ SCOPES = [
     'https://www.googleapis.com/auth/gmail.send',
     'https://www.googleapis.com/auth/gmail.readonly',
     'https://www.googleapis.com/auth/documents',
+    'https://www.googleapis.com/auth/forms.body',
+    'https://www.googleapis.com/auth/presentations',
 ]
 
 class GoogleWorkspaceAgent:
@@ -52,6 +54,8 @@ class GoogleWorkspaceAgent:
         self._drive_service = None
         self._gmail_service = None
         self._docs_service = None
+        self._forms_service = None
+        self._slides_service = None
         
         # Try to load existing credentials
         self._load_credentials()
@@ -149,6 +153,18 @@ class GoogleWorkspaceAgent:
         if not self._docs_service and self.creds:
             self._docs_service = build('docs', 'v1', credentials=self.creds)
         return self._docs_service
+
+    def _get_forms_service(self):
+        """Get or create Forms service."""
+        if not self._forms_service and self.creds:
+            self._forms_service = build('forms', 'v1', credentials=self.creds)
+        return self._forms_service
+
+    def _get_slides_service(self):
+        """Get or create Slides service."""
+        if not self._slides_service and self.creds:
+            self._slides_service = build('slides', 'v1', credentials=self.creds)
+        return self._slides_service
 
     # ==================== CALENDAR FUNCTIONS ====================
     
@@ -801,14 +817,12 @@ class GoogleWorkspaceAgent:
                     userId='me',
                     maxResults=max_results,
                     q=query,
-                    labelIds=label_ids or ['INBOX']
+                    labelIds=label_ids
                 ).execute()
             )
             
             messages = results.get('messages', [])
             
-            # Get details for each message
-            emails = []
             for msg in messages[:max_results]:
                 msg_detail = await asyncio.to_thread(
                     lambda m=msg: service.users().messages().get(
@@ -1039,6 +1053,103 @@ class GoogleWorkspaceAgent:
         except Exception as e:
             return {"success": False, "error": str(e)}
 
+
+
+    # ==================== FORMS FUNCTIONS ====================
+    
+    def _get_forms_service(self):
+        """Get or create Google Forms service."""
+        if not self._forms_service:
+            if not self.creds:
+                self._load_credentials()
+            if self.creds:
+                self._forms_service = build('forms', 'v1', credentials=self.creds)
+        return self._forms_service
+
+    async def create_form(self, title: str, document_title: str = None) -> Dict[str, Any]:
+        """
+        Create a new Google Form.
+        
+        Args:
+            title: Form title
+            document_title: Filename in Drive (optional, defaults to title)
+            
+        Returns:
+            Dict with form info (id, url, responderUri) or error
+        """
+        if not self.is_authenticated():
+            return {"success": False, "error": "Not authenticated."}
+            
+        try:
+            service = self._get_forms_service()
+            
+            form_body = {
+                "info": {
+                    "title": title,
+                    "documentTitle": document_title or title
+                }
+            }
+            
+            form = await asyncio.to_thread(
+                lambda: service.forms().create(body=form_body).execute()
+            )
+            
+            return {
+                "success": True,
+                "form_id": form["formId"],
+                "title": form["info"]["title"],
+                "url": form["responderUri"],
+                "edit_url": f"https://docs.google.com/forms/d/{form['formId']}/edit",
+                "message": f"Form '{title}' created successfully!"
+            }
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+
+    # ==================== SLIDES FUNCTIONS ====================
+
+    def _get_slides_service(self):
+        """Get or create Google Slides service."""
+        if not self._slides_service:
+            if not self.creds:
+                self._load_credentials()
+            if self.creds:
+                self._slides_service = build('slides', 'v1', credentials=self.creds)
+        return self._slides_service
+
+    async def create_presentation(self, title: str) -> Dict[str, Any]:
+        """
+        Create a new Google Slide Presentation.
+        
+        Args:
+            title: Presentation title
+            
+        Returns:
+            Dict with presentation info (id, url) or error
+        """
+        if not self.is_authenticated():
+            return {"success": False, "error": "Not authenticated."}
+            
+        try:
+            service = self._get_slides_service()
+            
+            presentation = await asyncio.to_thread(
+                lambda: service.presentations().create(
+                    body={'title': title}
+                ).execute()
+            )
+            
+            presentation_id = presentation.get('presentationId')
+            
+            return {
+                "success": True,
+                "presentation_id": presentation_id,
+                "title": presentation.get('title'),
+                "url": f"https://docs.google.com/presentation/d/{presentation_id}/embed?start=false&loop=false&delayms=3000",
+                "edit_url": f"https://docs.google.com/presentation/d/{presentation_id}/edit",
+                "message": f"Presentation '{title}' created successfully!"
+            }
+        except Exception as e:
+            return {"success": False, "error": str(e)}
 
 # Singleton instance
 _workspace_agent = None

@@ -363,8 +363,11 @@ async def start_audio(sid, data=None):
         
         loop_task.add_done_callback(handle_loop_exit)
         
-        print("Emitting 'A.D.A Started'")
-        await sio.emit('status', {'msg': 'A.D.A Started'})
+        print("A.S.P.A Started")
+        await sio.emit('status', {'msg': 'A.S.P.A Started'})
+        # Need to get current project name from audio_loop if it's available
+        current_project_name = audio_loop.project_manager.current_project if audio_loop.project_manager else "default"
+        await sio.emit('project_update', {'project': current_project_name})
 
         # Load saved printers
         saved_printers = SETTINGS.get("printers", [])
@@ -798,6 +801,115 @@ async def add_printer(sid, data):
     if not audio_loop or not audio_loop.printer_agent:
         await sio.emit('error', {'msg': "Printer Agent not available"})
         return
+
+@sio.event
+async def create_google_form(sid, data):
+    # data: { title: "New Form" }
+    title = data.get('title', 'Untitled Form')
+    print(f"Received create_google_form request: '{title}'")
+    
+    if not audio_loop or not audio_loop.google_workspace_agent:
+        # Check if google_workspace_agent is available on audio_loop
+        # It seems server.py doesn't initialize it directly, but ada.py might.
+        # Let's check ada.py next, but for now assuming it's available or we need to add it to AudioLoop
+        # Based on file listing, google_workspace_agent.py exists.
+        # We need to make sure AudioLoop has it.
+        await sio.emit('error', {'msg': "Google Workspace Agent not available"})
+        return
+
+    try:
+        await sio.emit('status', {'msg': 'Creating Google Form...'})
+        result = await audio_loop.google_workspace_agent.create_form(title)
+        
+        if result.get('success'):
+            await sio.emit('google_form_created', result)
+            await sio.emit('status', {'msg': f"Form '{title}' created"})
+        else:
+            await sio.emit('error', {'msg': f"Failed to create form: {result.get('error')}"})
+            
+    except Exception as e:
+        print(f"Error creating form: {e}")
+        await sio.emit('error', {'msg': f"Form Creation Error: {str(e)}"})
+
+@sio.event
+async def create_google_slide(sid, data):
+    # data: { title: "New Presentation" }
+    title = data.get('title', 'Untitled Presentation')
+    print(f"Received create_google_slide request: '{title}'")
+    
+    if not audio_loop or not audio_loop.google_workspace_agent:
+        await sio.emit('error', {'msg': "Google Workspace Agent not available"})
+        return
+
+    try:
+        await sio.emit('status', {'msg': 'Creating Google Slide...'})
+        result = await audio_loop.google_workspace_agent.create_presentation(title)
+        
+        if result.get('success'):
+            await sio.emit('google_slide_created', result)
+            await sio.emit('status', {'msg': f"Presentation '{title}' created"})
+        else:
+            await sio.emit('error', {'msg': f"Failed to create presentation: {result.get('error')}"})
+            
+    except Exception as e:
+        print(f"Error creating presentation: {e}")
+        await sio.emit('error', {'msg': f"Presentation Creation Error: {str(e)}"})
+
+@sio.event
+async def send_yahoo_email(sid, data):
+    # data: { to: "email@example.com", subject: "Heads up", body: "Hello" }
+    to_email = data.get('to')
+    subject = data.get('subject', 'No Subject')
+    body = data.get('body', '')
+    
+    print(f"Received send_yahoo_email to: {to_email}")
+    
+    if not audio_loop or not audio_loop.yahoo_mail_agent:
+        await sio.emit('error', {'msg': "Yahoo Mail Agent not available"})
+        return
+
+    try:
+        await sio.emit('status', {'msg': 'Sending Yahoo Email...'})
+        result = await asyncio.to_thread(
+            audio_loop.yahoo_mail_agent.send_email, to_email, subject, body
+        )
+        
+        if result.get('success'):
+            await sio.emit('status', {'msg': f"Yahoo Email sent to {to_email}"})
+        else:
+            await sio.emit('error', {'msg': f"Failed to send email: {result.get('error')}"})
+            
+    except Exception as e:
+        print(f"Error sending yahoo email: {e}")
+        await sio.emit('error', {'msg': f"Yahoo Email Error: {str(e)}"})
+
+@sio.event
+async def list_yahoo_emails(sid, data):
+    # data: { limit: 5 }
+    limit = data.get('limit', 5)
+    print(f"Received list_yahoo_emails request (limit={limit})")
+    
+    if not audio_loop or not audio_loop.yahoo_mail_agent:
+        await sio.emit('error', {'msg': "Yahoo Mail Agent not available"})
+        return
+
+    try:
+        await sio.emit('status', {'msg': 'Checking Yahoo Mail...'})
+        result = await asyncio.to_thread(
+            audio_loop.yahoo_mail_agent.get_recent_emails, limit
+        )
+        
+        if result.get('success'):
+            # Emit list to frontend (e.g., for a Chat response or dedicated view)
+            # For now, we mainly use this for the AI to read, but sending data back is good practice
+            await sio.emit('yahoo_emails_list', result)
+            await sio.emit('status', {'msg': f"Found {len(result.get('emails', []))} emails"})
+        else:
+            await sio.emit('error', {'msg': f"Failed to list emails: {result.get('error')}"})
+            
+    except Exception as e:
+        print(f"Error listing yahoo emails: {e}")
+        await sio.emit('error', {'msg': f"Yahoo List Error: {str(e)}"})
         
     try:
         # Add manually
