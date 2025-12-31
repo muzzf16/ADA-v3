@@ -151,8 +151,3 @@ To enable Calendar, Drive, Gmail, etc:
 ## 📄 License
 
 This project is licensed under the **MIT License**.
-
-<p align="center">
-  <strong>Built with 🤖 by Nazir Louis</strong><br>
-  <em>Bridging AI, Office Automation, and Local Control</em>
-</p>
